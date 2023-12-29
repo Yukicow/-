@@ -1,0 +1,49 @@
+
+
+1. 올림
+
+math.ceil()
+
+ex) math.ceil(3.14) ㅡ> 4 
+     math.ceil(-3.14) ㅡ> -3 
+     math.ceil(3.8) ㅡ> -3 
+
+*주의) 사용 전 import 로 불러와야 함
+
+from math import * 을 사용하는 게 편함.
+
+함수 math.~~ 이런 식으로 사용하고 싶지 않으면 # 지식 -> 모듈 파일 참조.
+
+
+
+2. 내림
+
+math.floor ㅡ> #무조건 수가 내려감
+math.trunc ㅡ> #0으로 향함 int()와 같은 식으로 반환됨
+
+ex) math.floor(-3.5) ㅡ> -3
+    math.trunc(-3.5) ㅡ> -4
+
+
+*주의) 사용 전 import math 로 불러와야 함
+
+
+
+3. 반올림
+
+
+round(number, number) 
+
+#앞에 숫자의 소수점 뒤의 숫자 자리까지 만큼 반올림
+
+ex) round(3.14, 1) ㅡ> 3.1
+
+
+#뒤에 아무것도 없이 round(number) 이런 식으로 쓰면 정수값으로 반올림
+
+ex) round(3.14) ㅡ> 3
+
+
+*주의) 반올림에서 0.5가 차이나면 짝수 수로 반 올림됨
+
+ex) 1.5 ㅡ> 2   2.5 ㅡ> 2

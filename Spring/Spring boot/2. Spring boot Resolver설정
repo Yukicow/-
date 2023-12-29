@@ -1,0 +1,41 @@
+
+
+
+
+
+
+
+
+
+Spring boot에서 Spring과 관련된 설정들은 기본적으로 application.properties에서 이루어진다.
+
+우리는 평소에 Spring에서 사용하던 InternalResourceViewResolver에 대한 설정을 해볼 것이다.
+
+application.properties로 가서 spring.mvc.view.prefix=접두사 , spring.mvc.view.suffix=접미사 이렇게 둘을 추가하면 끝이다.
+
+너무 간단하다.
+
+값에는 따로 "" 를 써 줄 필요 없이 그냥 문자열값을 그대로 넣으면 된다.
+
+다른 설정들을 할 때에는 그 때 그 때 검색해서 사용해 보자.
+
+
+
+근데 이 때 궁금한 게 예전에는 정적 리소스에 대해서 따로 설정해 두었는데
+
+spring boot에서는 어떻게 해야하나요?
+
+
+이것도 application.properties에 설정을 하나 추가하면 된다.
+
+전에 spring boot에는 정적인 리소스를 위한 root가 따로 존재한다고 했는데 그 위치를 설정하는 것이다.
+
+spring.resources.static-locations=classpath:/static/
+
+이렇게 추가하면 된다.
+
+그럼 url요청을 할 때에 static을 제외하고 static을 root로 해서 
+
+그 하위 디렉토리를 포함하여 정적 리소스에 대한 url 요청을 하면 제대로 출력되는 것을 볼 수 있다.
+
+

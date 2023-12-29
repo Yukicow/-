@@ -1,0 +1,126 @@
+
+
+
+
+
+
+
+@Entity 객체의 필드와 DB의 컬럼을 매핑할 때 사용가능한 몇 가지 어노테이션을 알아 보자.
+
+
+
+
+
+1. @Column
+
+말 그대로 컬럼을 명시해서 지정하는 어노테이션이다.
+
+옵션으로 name값이 있으며 컬럼의 이름을 지정할 수 있다. 
+
+이름을 지정할 경우 필드의 이름과 컬럼의 이름이 달라도 지정한 컬럼의 이름에 값이 매핑된다.
+
+
+옵션의 종류가 많이 있는데, 하나씩 알아 보자.
+
+
+- insertable
+
+등록을 가능하도록 할 지 말 지를 정한다. default는 true이다.
+
+
+- updatable
+
+수정을 가능하도록 할 지 말 지를 정한다. default는 true이다.
+
+
+- nullable
+
+null값의 가능 여부를 정한다. default는 true이며, false지정 시 not null 조건을 추가함
+
+
+- unique
+
+unique제약조건을 추가함. default는 false이다.
+
+제약 조건의 이름을 JPA에서 복잡하게 지정하기 때문에 잘 사용하지 않음
+
+unique 옵션은 @Table 어노테이션에 옵션으로 uniqueConstraint가 있는데, 그걸 많이 사용함
+
+
+- length
+
+문자열의 데이터일 경우 길이를 지정한다. VARCHAR()의 괄호 안에 들어갈 값이라고 생각하면 된다.
+
+
+- precision, scale
+
+BigInteger나 BigDecimal같은 큰 숫자 데이터를 사용할 때 지정 가능한 옵션이다. 
+
+필요할 때 찾아 보자.
+
+
+
+
+2. @Temporal
+
+시간 타입을 매핑할 때 사용하는 어노테이션이다.
+
+데이터베이스에는 DATE, TIME, TIMESTAMP 이렇게 세 가지 시간 표현 방식이 있기 때문에
+
+JAVA에서 제공하는 DATE를 각 타입에 맞게 넣기 위해서는 타입 지정을 통해 원하는 시간만 빼서 넣어야 한다.
+
+그래서 사용하던 어노테이션인데, 현재는 java8부터 LocalDate, LocalTime, LocalDateTime이라는 타입이 나오면서 필요 없어졌다.
+
+DATE는 LocalDate(년월일)를, TIME은 LocalTime, TIMESTAMP(시분초)는 LocalDateTime(년월일 시분초)를 지정해서 사용하면 된다. 
+
+
+
+
+3. @Enumerated
+
+필드의 데이터 타입이 Enum인 경우가 있을 수 있다.
+
+DB에는 Enum이 없기 때문에 Enum타입의 데이터를 DB에 저장하기가 애매할 수 있다.
+
+그래서 @Enumerated를 사용하면 옵션에 따라 Enum의 순서를 저장하거나 Enum 데이터의 이름을 저장할 수 있도록 해 준다.
+
+@Enumerated(EnumType.옵션) 형태로 사용 가능하며 옵션에는 ORDINAL과 STRING이 있다.
+
+ORDINAL은 Enum데이터의 순서값을 저장하고, String은 데이터의 이름을 저장한다.
+
+
+예를 들어 DELIVERY라는 Enum타입에 FAST, NORMAL 데이터가 있을 때
+
+옵션이 ORDINAL이면 FAST가 저장될 때에는 0, NORMAL이 저장될 때에는 1이 저장되며
+
+옵션이 STRING이면 FAST가 저장될 때에는 FAST, NORMAL이 저장될 때에는 NORMAL이 저장된다.
+
+default는 ORDINAL이지만 보통 STRING옵션을 사용해야 한다.
+
+ORDINAL을 사용할 경우 나중에 enum데이터가 더 추가될 때 데이터의 순서가 바뀔 수도 있는데, 그럴 경우 문제가 발생할 수 있기 때문.
+
+
+
+
+4. @Lob
+
+저장되는 데이터가 매우 클 때 지정하는 데이터베이스의 타입이다.
+
+BLOB과 CLOB이 있다.
+
+BLOB은 이진 대형 객체(Binary), 이미지, 동영상, MP3 등과 같은 바이너리 데이터를 저장할 때
+
+CLOB은 문자 데이터를 저장할 때 사용되는 타입이다.
+
+필드가 String 타입이면 CLOB이 나머지는 BLOB으로 매핑된다.
+
+JPA에서 자동으로 CREATE 테이블을 해 줄 때 말고는 필요 없는 어노테이션이다.
+
+
+
+
+5. @Transient
+
+Entity객체 중에서 필드에 테이블의 컬럼과 매핑시키고 싶지 않은 필드가 있으면 지정할 수 있는 기능이다.
+
+이 어노테이션을 사용하면 해당 필드는 DB의 특정 컬럼과 매핑되는 게 아니고 메모리 상에서만 사용되는 필드가 된다.

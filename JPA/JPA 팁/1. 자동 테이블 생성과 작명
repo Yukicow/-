@@ -1,0 +1,71 @@
+
+
+
+
+
+
+
+JPA에서는 테이블을 자동으로 생성하도록 설정할 수도 있다.
+
+persistence.xml에  <property name="hibernate.hbm2ddl.auto" value="create" />를 추가하면 동작한다.
+
+스프링 부트 사용 시 spring.jpa.hibernate.ddl-auto= 를 통해 값을 설정하면 된다.
+
+
+옵션에는 아래의 종류가 있다.
+
+none : default값이며 아무 일도 일어나지 않는다.
+
+create-only : 데이터베이스를 새로 생성한다.
+
+drop : 데이터베이스를 drop 한다.
+
+create : 데이터베이스를 drop 한 후, 데이터베이스를 새로 생성한다.(기능적으로는 drop + create-only와 같다)
+
+create-drop : SessionFactory가 시작될 때 스키마를 drop하고 재생성하며, SessionFactory가 종료될 때도 스키마를 drop 한다.
+
+validate : 데이터베이스 스키마를 검증 한다.
+
+update : 데이터베이스 스키마를 갱신 한다.
+
+
+실제 운영 환경에서는 none을 사용하는 게 좋다. 
+
+꼭 사용하고 싶다면 최대 validate까지이다. 
+
+그 이상의 것들은 모두 실제 운영 환경에서는 문제가 발생할 수 있기 때문에 사용하지 않는 게 좋다.
+
+운영환경 뿐만 아니라 그냥 웬만하면 사용하지 않는 게 좋다.
+
+진짜 연습용으로 개인적으로 사용하는 것이거나 할 때가 아니면 안 쓰는 게 좋다.
+
+잘못 사용했다가는 데이터가 모두 날아가버릴 수 있기 때문.
+
+
+
+위처럼 JPA에서 Entity를 보고 자동으로 테이블을 생성할 때 생성되는 컬럼명이나
+
+필드명을 보고 테이블의 컬럼을 참조할 때 Entity의 필드명을 그대로 따라가게 된다.
+
+java에서는 보통 CamelCase(낙타표기법)을 사용하기 때문에 DB의 컬럼 작명법인 snake_case방식과 맞지 않는다.
+
+그래서 그냥 사용하게 되면, 우리가 Entity의 필드명으로 작성한 CamelCase방식의 필드명이 테이블의 컬럼을 참조할 때 사용되거나
+
+자동으로 테이블을 생성해 줄 때 컬럼명으로 그대로 사용된다.
+
+
+<property name="hibernate.physical_naming_strategy" 
+
+value="org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy"/>
+
+위의 설정을 추가하면 CamelCase방식의 Entity 필드명을 자동으로 snake_case방식으로 변경하여 참조하고 생성해 준다.
+
+
+스프링 부트를 사용하게 되면 기본적으로 저 설정이 적용되어 있기 때문에 따로 설정을 할 필요가 없다.
+
+또 반대로 말하면 위의 설정이 적용되어 있기 때문에 적용이 안 된 줄 알고 필드명을 snake_case방식으로 작성하면 안 된다.
+
+그럼 스프링 부트에서 제대로 인식을 하지 못 해서 문제가 발생하기 때문이다.
+
+
+

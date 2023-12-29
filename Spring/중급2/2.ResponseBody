@@ -1,0 +1,201 @@
+
+
+
+
+
+
+우리는 Controller를 통해 ViewResolver에게 url과 매핑되는 View를 찾아 View의 생성을 부탁하고
+
+생성된 View가 클라이언트에게 보내지도록 사용한다.
+
+하지만 이 때 특정 View가 아니고 단순 데이터를 보내고 싶을 경우는 어떨까?
+
+그럴 경우가 얼마나 있을까 싶겠지만 사실 우리가 보내는 html파일도 응답 http body에 
+
+html이라는 마크업 Language 형식을 지킨 문자열 데이터들이 담겨서 보내진 거고 그걸 웹 브라우저가 
+
+html형식으로 읽어들여서 해석하고 화면을 보여주는 것 뿐이다.
+
+한 마디로 html의 형식을 지켜서 작성된 데이터를 받는 건 웹 브라우저를 통해 
+
+화면에 무언가가 보여지기 위한 용도로서 데이터를 보낸 것이라는 것이다.
+
+# https://www.youtube.com/watch?v=55FrHTNjTCc Markup Language에 대한 내용
+
+
+그런 면에서 따져 보면 화면에 보여지는 용도가 아니고 다른 용도로도 url이라는 걸 사용할 수 있을 것이다.
+
+꼭 html 형태가 아니라 다른 형태의 데이터를 받는 것도 가능하다는 것이다.
+
+그것은 단순 String 형태의 데이터일 수도, 또는 다른 마크업 언어로 이루어진 데이터일 수도 있다.
+
+클라이언트는 url 요청을 화면에 보여지는 view를 보기위한 html형태의 데이터를 받는 게 아니고 
+
+특정 다른 형태의 데이터를 이용하거나 조회하기 위해 필요로 할 수 있다는 것이다.
+
+
+이럴 때 사용할 수 있는 것인 @ResponseBody 이다.
+
+메소드에 @ResponseBody로 어노테이션이 되어 있다면 메소드에서 리턴되는 값은 View 를 통해서 출력되지 않고 
+
+MessageConverter에 의해 HTTP Response Body에 직접 쓰여지게 된다.
+
+HTTP Response Body는 실제로 클라이언트에게 보내지는 데이터가 담기는 곳을 말한다.
+
+jsp파일이 html파일이 되는 것도 Servlet에서 Response객체의 writer를 통해 작성한 html형식의 내용들이 body에 담기기 때문이다.
+
+@ResponseBody는 그 body에 메소드에서 return하는 데이터를 바로 담겠다는 것이고 그렇기 때문에 View를 거칠 필요가 없다.
+
+
+이 때 body에 담기는 데이터의 형식에는 여러 가지가 있을 것이다.
+
+body에 담기는 건 단순 문자열 데이터들이지만 그 문자열 데이터들이 특정 양식을 갖춘다면
+
+html도 단순 문자열 데이터들인데 html이라는 마크업 Language의 형식을 지켜서 작성된 문자열 데이터들이다.
+
+그리고 그건 따지고 보면 그냥 하나의 html파일이라고도 볼 수 있다.
+
+즉, body에 담기는 문자열 데이터의 형식에 따라서 그 데이터는 결국 다른 곳에서 특정 Format으로 작용할 수 있다는 것이다.
+
+
+제일 기본적인 것은 역시 String일 것이다.
+
+@ResponseBody를 사용한 메소드의 return값이 String일 경우에는 그 String 데이터를 body에 담아 보낸다.
+
+Markup Language에 대한 내용을 보고 왔다면 이해할 수 있겠지만 만약 우리의 데이터를
+
+특정 Markup Language의 형태로 body에 담아서 보내고 싶다면 어떻게 해야 할까?
+
+이 때 도움을 주는 라이브러리가 있다. 우리가 url 요청을 받았을 때 특정 데이터를 생성하거나
+
+데이터 베이스로 부터 받은 데이터들을 저장하는 객체의 형태로 데이터를 생성했을 때
+
+그 데이터를 특정 Markup Language 형식에 맞게 변환해 주는 라이브러리(툴)이다.
+
+
+바로 Jackson이라는 녀석이다.
+
+Jackson은 자바용 json 라이브러리로 잘 알려져 있지만 Json뿐만 아니라 
+
+XML/YAML/CSV 등 다양한 형식의 데이터를 지원하는 data-processing 툴이다.
+
+# Jackson 말고도 다른 툴도 분명 있을 것이다. 아마.
+
+
+String 타입의 데이터의 경우 StringHttpMessageConverter에 의해 바로 body에 문자열 형태로 데이터가 담기면 되지만
+
+객체가 반환될 경우 그 객체를 다른 곳에서도 사용할 수 있게 Json형태의 데이터로 변환하여 body에 담아야 한다.
+
+즉, MessageConverter도 때에 따라 사용할 수 있게 종류가 여러 가지가 있다.
+
+기본적으로 객체가 반환될 경우에는 Json형태로 변환을 해야 하기 때문에 MappingJackson2MessageConverter를 사용한다.
+
+MappingJackson2MessageConverter는 Jackson을 이용해 반환된 객체를 Json 형식의 데이터로 변환하고 body에 담는다.
+
+그럼 사용자는 그렇게 작성된 Json형태의 데이터를 받아 사용할 수 있게 된다.
+
+그렇기 때문에 StringHttpMessageConverter와는 다르게 MappingJackson2MessageConverter를 사용하려면 
+
+Jackson이 기본적으로 있어야 한다. 그래서 라이브러리를 다운 받아야 하는 것이다.
+
+
+클라이언트가 받는 데이터는 Json 형식을 지켜서 작성됐기 때문에, 즉, 그 자체로 Json이라고 볼 수 있기 때문에
+
+그 데이터를 받은 클라이언트는 그 데이터를 가져다가 Json으로서 사용할 수 있다.
+
+이것은 API의 원리와도 연결되는 내용이다.
+
+우리가 특정 URL API를 통해 어플리케이션으로 부터 데이터를 받아올 수 있는 것도 이런 원리로 동작한다.
+
+우리도 이 @ResponseBody를 이용해서 다른 사용자를 위한, 또는 프론트 엔드 단에서 사용할 데이터를
+
+반환활 수 있도록 하고 그 데이터를 반환받을 수 있는 API를 제공하면 된다.
+
+
+근데 여기서 조심할 게 하나 있는데 인코딩 문제이다.
+
+View의 경우는 Response객체가 body에 데이터를 담기 때문에 Response객체에 인코딩 타입을 지정해 주었는데
+
+위의 경우는 MessageConverter에게 인코딩 타입을 지정해 주어야 body에 데이터를 담을 때 그 형식으로 저장할 것이다.
+
+사실 MappingJackson2MessageConverter의 경우는 The default encoding used for writing to text messages: UTF-8.
+
+즉, 기본으로 UTF-8로 되어 있기 때문에 문제가 없지만 
+
+StringHttpMessageConverter의 경우는 A default constructor that uses "ISO-8859-1" as the default charset.
+
+ISO-8859-1를 default로 사용하기 때문에 따로 설정이 필요하다.
+
+
+설정 방법은 
+
+<mvc:annotation-driven> 태그에 해 주면 된다.
+
+원래 위의 각 MessageConverter들은 각각 우리가 등록을 해 주어야 하지만 <mvc:annotation-driven>에서 지원하는 
+
+어노테이션에 @ResponseBody이 포함되기 때문에 몇 가지 기본적인 MessageConverter의 생성도 지원하고 있나 보다.
+
+그리고 그런 기본 MessageConverter 말고 다른 것을 사용할 때에는 우리가 따로 지정할 수도 있다.
+
+
+하여튼 <mvc:annotation-driven>에 이렇게 설정해 주면 된다.
+
+<mvc:annotation-driven>
+    <mvc:message-converters>
+        <bean class="org.springframework.http.converter.xml.StringHttpMessageConverter" >
+            <property name="supportedMediaTypes">
+                <list>
+                    <value>text/html; charset=UTF-8</value>
+                </list>
+            </property>
+        </bean>
+    </mvc:message-converters>
+</mvc:annotation-driven>
+
+뭐 원리에 대한 부분은 DI 기능을 조금 배웠다면 바로 알 수 있는 내용이니 넘어가겠다.
+
+
+
+그리고 다음은 @ResponseBody에 대한 팁(?) 또는 다른 사용법이다.
+
+@ResponseBody의 경우는 우리가 메소드에 하나하나 설정해 주어야 했지만
+
+아예 클래스 통째로 @ResponseBody를 모든 메소드에 적용시킬 수 있다.
+
+클래스에 @RestController 어노테이션을 추가하는 것이다.
+
+그럼 그냥 @Controller의 모든 메소드에 @ResponseBody를 붙인 것과 똑같이 동작한다.
+
+하지만 이름에서도 알 수 있지만 일반적으로 REST API를 구현하기 위해 많이 사용한다.
+
+즉, REST API를 제공하기 위한 Controller에 사용하는 것이 적합하다는 것이다.
+
+만약 그냥 특정 @Controller에 데이터를 전달하는 메소드를 추가할 때에는 @ResponseBody를
+
+아예 전문적으로 REST API의 제공을 위한 Controller라면 @RestController를 사용하면 된다.
+
+
+아, 그리고 좀 늦게 알려주게 됐는데
+
+그냥 Controller용도와 RestController용도로 사용되는 Controller의 클래스 이름이 같은 경우가 있을 수도 있다.
+
+기본적으로 Class의 이름을 토대로 빈에 등록되는 id가 결정되기 때문에 클래스 이름이 같다면 빈 이름도 같아진다.
+
+그걸 해결하기 위해 빈으로 등록될 때 설정되는 이름을 지정할 수 있는데 그냥 @Controller("이름")의 형태로 지정해 주면 된다.
+
+똑같이 @Component에 해당하는 모든 어노테이션에 지정해 줄 수 있다. @RestController도 포함이다.
+
+그러니 이름이 겹칠 경우에는 이름을 지정해서 겹치지 않도록 해 주자.
+
+
+
+
+
+근데 저희가 보낸 객체 데이터는 json 형식의 단순 데이터고 body에 담겨져 그대로 보내졌을텐데 
+
+왜 크롬에서 F12를 눌러서 봤을 때 <html></html> 태그가 있고 데이터 내용이 <body></body>에 들어가 있는 거죠?
+
+
+그것은 크롬이 제공하는 기능이라서 그런 것이다.
+
+다른 웹 브라우저로 들어가면 데이터만 적혀있는 게 있다. 크롬이랑 비슷하게 다른 기능을 제공하는 브라우저가 있을 수도 있고

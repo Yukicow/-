@@ -1,0 +1,5 @@
+SyntaxError: invalid syntax
+>>>
+
+
+위처럼 뜨면 >>> 옆에 exit() 쓰고 엔터 누르면 됨.

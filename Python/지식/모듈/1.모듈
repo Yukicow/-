@@ -1,0 +1,107 @@
+
+
+모듈은 그냥 파일임.
+
+컴퓨터로 따지면 엔진이나 범퍼 등 부품 같은 거임.
+
+모든 코드를 한 파일에 쓰면 복잡하고 오류 같은 것이 발생했을 때
+
+전체를 고쳐야 하거나 가독성도 안 좋음.
+
+그래서 원하는 파트별로 모듈을 만들어서 나누는 것.
+
+예시)
+
+
+내가 theater.module.py 라는 파일을 만들고 
+
+안에다가 여러 가지 함수를 만들었다고 치자.
+
+그럼 다른 파일에서 import theater.module을 통해 불러내고 #.py는 안 씀
+
+안에 있는 함수를 불러올 수 있음.
+
+
+
+ex)
+ㅡㅡㅡㅡㅡtheater.module.py 파일ㅡㅡㅡㅡㅡ
+
+
+def price(people):
+    print("{0}명의 일반 요금은 {1} 입니다.".format(people, people*10000))
+
+def price_soldier(people)
+    print("{0}명의 일반 요금은 {1} 입니다.".format(people, people*7000))
+
+ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
+
+
+ㅡㅡㅡㅡㅡ다른 파일ㅡㅡㅡㅡㅡ
+
+import theater.module
+
+theater.moudel.price(인원)
+
+ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
+
+
+이런 식으로 사용 가능
+
+
+위에서 theater.module이 이름이 너무 길다 싶으면
+
+import를 할 때 as 를 이용하면 됨
+
+import theater.module as mp
+
+그럼 theater.module을 'mp'로만 호출할 수 있게 됨. # 진짜 mp로만 됨.
+
+
+또 다른 방법으로는
+
+from import *를 이용하는 것. 
+
+
+from theater.module import * # *은 모든 정보를 불러오겠다는 것.
+
+이거는 따로 theater.module을 불러내지 않고 
+
+안에 있는 내용을 불러와 바로 사용하겠다는 뜻.
+
+하지만 fromm import *이 바로 사용하는 것이 단점이 되기도 하는 게
+
+다른 모듈을 불러와서 사용할 때 가독성이 떨어질 수 있음.
+
+이 함수가 어떤 것에 대한 것인지 헷갈림.
+
+그래서 내장함수 같은 랜덤이나 math 함수 불러올 때 이런 식으로 많이 쓰고
+
+실제 개발자들이 모듈이나 이런 곳에서는 거의 안 씀.
+
+
+ex)
+
+from theater.module import *
+
+price(인원)
+
+
+이 때 * 대신 원하는 함수 이름을 쓰면 그 함수만 가져올 수 있음.
+
+위에 모든 것을 짬뽕도 가능함.
+
+ex)
+
+from theater.module import price_soldier as ps
+
+이러면 theater.module 에서 price_soldier만 불러오고 그거를 ps라고 지정하는 것.
+
+
+
+주의) from import 에서 from 뒤의 값은 인식을 못 함.
+
+예를 들어 from pak import japan 이라고 모듈을 불러 오면
+
+japan에 대한 정보는 인식하지만 pak에 대한 정보는 아예 모름.
+
+그래서 pak 안에 있는 다른 모듈들은 인식을 못 함.

@@ -1,0 +1,31 @@
+
+
+
+
+
+
+
+
+
+
+
+페이징을 사용할 때 setFirstResult()와 setMaxResult()를 사용하게 될 텐데, 조심할 것이 있다.
+
+setFirstResult와 setMaxResult를 잘못 알고 사용하는 것이다.
+
+setFirstResult()는 페이징의 시작 row를 명시하는 메소드이고,
+
+setMaxResult()는 끝 row를 명시하는 것이 아니고 시작 row로부터 몇 개를 가져오는 지를 명시하는 메소드이다.
+
+즉, 몇 개를 결과로 가져올 것이냐에 대한 것이지, index가 아니라는 것이다.
+
+
+그래서 이걸 잘못 알고 setFirstResult(5), setMaxResult(10) 이런 식으로 설정한 다음
+
+5~10까지의 row가 나올 거라고 기대하고 있으면 문제가 발생한다.
+
+setMaxResult(10)은 최대 10개까지의 결과를 가져오겠다는 뜻이니
+
+5~15까지의 row가 출력되는 것이다.
+
+이 때 5번째 row이후의 row가 10개 보다 적다면 그 개수만큼만 반환될 것이다.

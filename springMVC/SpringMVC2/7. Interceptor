@@ -1,0 +1,82 @@
+
+
+
+
+
+
+
+Interceptor는 Spring에서 제공하는 공통사를 처리하는 기술이라고 보면 된다.
+
+즉, Spring에서 제공하는 filter라고 생각할 수 있다.
+
+Filter와 Interceptor의 차이점은 Interceptor가 기능이 좀 더 많다는 점과 호출 시점의 차이라고 볼 수 있다.
+
+Interceptor는 Spring이 제공하는 만큼 Spring의 프론트 컨트롤러가 호출된 이후에 작동한다.
+
+Filter는 서블릿 호출 이전에 시작되기 때문에 프론트 컨트롤러가 호출되기 전에 작동한다.
+
+
+Interceptor를 만들기 위해서는 HandlerInterceptor 인터페이스를 구현하면 된다.
+
+그 인터페이스를 구현하면 3개의 메소드가 있다. 
+
+preHandle, postHandle, afterCompletion이다.
+
+
+preHandle은 Controller호출 이전, postHandle은 Controller 호출 이후, afterCompletion은 요청이 다 끝난 후에 호출되는 메소드이다.
+
+preHandle은 Interceptor는 HandlerAdapter호출되기 바로 이전에 호출되기 때문에
+
+호출될 예정인 Handler를 인자로 넘겨받을 수 있고, 실제로 인자로 받는다.
+
+postHandle은 HandlerAdapter가 ModelAndView객체를 반환한 뒤에 호출되기 때문에 ModelAndView객체를 인자로 받는다.
+
+afterCompletion은 postHandle과 거의 같은데 예외 발생에 따라 다르다.
+
+postHandle은 요청 로직 수행 중 예외가 발생해서 프론트 컨트롤러에 최종적으로 예외가 넘어오면 호출이 되지 않는다. 
+
+afterCompletion은 예외가 발생해도 오히려 그 예외에 대한 정보를 인자로 받아 수행된다.
+
+
+여기서 예외의 기준을 확실하게 짚고 넘어가는 게 좋다.
+
+sendError를 사용한 경우는 Was에서 잡는 것이기 때문에 예외가 발생한 것으로 보지 않고 postHandle이 호출된다.
+
+또, ExceptionHandler와 같이 예외가 발생한 것을 ExceptionResolver에 의해 처리하게 되는 경우는
+
+한 번, 예외가 프론트 컨트롤러로 넘어오고 거기서 ExceptionResolver를 호출해서 해결하는 것이기 때문에
+
+일단 예외가 넘어온 것으로 간주해서 postHandle이 호출되지 않는다.
+
+그래서 ExceptionResolver에 의해 정상흐름으로 바뀌어도 이미 HandlerAdapter에서는 예외를 던졌기 때문에 postHandle은 호출되지 않는다.
+
+아마 postHandle은 try catch의 try문 안에서 Handler호출 이후에 있도록 작성되었고, 예외 발생시 postHandle이 호출되지 않고,
+
+catch로 넘어가기 때문에 호출이 안 되는 방식이 아닐까 한다. 
+
+# 이 방법이 아니라면 postHandle을 호출하기 전에 HandlerAdapter에서 반환하는 값이 null일 경우 호출되지 않도록 로직이 짜여있을 것이다.
+
+# 근데 이 방법은 아닐 수밖에 없는 게, 그렇게 되면 ExceptionResolver에 의해서 catch문이 마무리되고 postHandle을 수행할 지 보려할 때
+
+# ExceptionResolver가 예외를 제대로 처리해서 특정 값을 반환하면, postHandle이 수행돼야 하는데, 그렇지 않기 때문이다.
+
+반대로 afterCompletion은 이제 finally에 작성되어 있어서 무조건 실행되는 것이라고 보면 될 것 같다.
+
+
+이제는 Interceptor를 등록하는 방법은 WebMvcConfigurer를 구현하는 Config파일에 
+
+addInterceptors()메소드를 오버라이딩 하면 된다.
+
+registry라는 인자가 있는데, registry.addInterceptor() 메소드를 통해 등록하면 된다.
+
+return값이 같은 registry로 되어 있어서 chain형식으로 바로 다른 메소드들도 호출해서 사용할 수 있다.
+
+addPathPatterns()로 적용 url패턴, order()를 통한 우선순위, excludePathPatterns()를 통한 배제 url패턴을 지정하는 것도 가능하다.
+
+다른 건 필요하면 그때 그때 찾아보면 될 것 같고 주의해야 할 점이 하나 있다.
+
+Interceptor의 경우는 Filter와는 url패턴이 조금 다르다.
+
+servlet은 /* 가 모든이라는 뜻인데, Interceptor는 /** 가 모든이라는 뜻이다.
+
+그리고 addPathPatterns()을 사용하지 않으면 기본으로 /**로 지정되는 듯 하다.

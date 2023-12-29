@@ -1,0 +1,38 @@
+
+
+
+
+
+
+
+
+jsp에는 pageContext 객체가 있다.
+
+jsp를 사용할 때에 request객체라든지 response 객체라든지 session 등등
+
+기본적으로 사용가능한 내장 객체가 많다.
+
+이러한 내장 객체들은 모두 pageContext객체의 메소드에 의해 호출되어 메모리 상에 올려진 객체들이다.
+
+즉 JSP가 서블릿으로 변환되는 과정에서 pageContext 객체를 통해 request, response, out 등의 기본객체를 생성해주기 때문에 
+
+우리는 JSP를 작성할 때 별다른 선언 없이 사용이 가능한 것이다.
+
+
+단 이러한 기본객체들은 <%! %> 전역 전언문 안에서는 사용할 수 없는데 그 이유는 서블릿으로 변환될 때 
+
+기본 객체들이 _jspService() 메서드의 지역변수로 생성되기 때문이다.
+
+
+스크립트릿 태그를 배울 때 jsp파일이 서블릿으로 변환되면 안의 로직들이 하나의 메소드 안에 들어가 수행된다는 걸 기억하는가?
+
+그 메소드에는 이미 pageContext 객체에 의해 만들어진 기본 내장 객체들이 있다는 뜻이고 그 밑에 우리의 로직이 들어가는 것이니
+
+우리는 기본 내장 객체를 사용할 수 있다는 뜻이다.
+
+
+pageContext 객체에는 forward 메소드와 include 메소드가 있는데
+
+<jsp:forward></jsp:forward>와 <jsp:include></jsp:include> 태그는
+
+서블릿에서 pageContext객체의 forward 메소드와 include 메소드를 사용하는 코드로 변환된다.

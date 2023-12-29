@@ -1,0 +1,68 @@
+
+
+
+
+
+
+
+Filter란 서블릿에서 제공하는 요청 수행 이전에 수문장 역할을 하는 기능이라고 볼 수 있다.
+
+쉽게 서블릿이 요청을 처리하기 전후로 특정 로직을 수행하도록 하는 녀석이라고 생각하면 된다.
+
+javax.servlet이 제공하는 Filter 인터페이스를 구현해서 만들면 된다.
+
+그럼 3가지 메소드를 구현하도록 하는데, 사실상 init과 destroy메소드는 생명주기에 관한 메소드이고
+
+doFilter가 실질적으로 로직을 작성해야 하는 부분인 것이다.
+
+
+doFilter에는 FilterChain타입의 chain이라는 인자를 받는데 이 객체를 통해서 여러 필터들의 수행을 연계한다.
+
+chain.doFilter() 메소드를 호출하면 다음 우선순위의 필터의 doFilter가 수행되고, 다음 필터가 없다면 서블릿이 호출된다.
+
+chain에 의해서 다음 필터가 호출되는 형태이기 때문에 chain.doFilter()를 수행할 대에는 try catch문으로 감싸서 Exception을 잡아야 한다.
+
+또, chain.doFilter는 다른 필터를 호출하고 없으면 서블릿을 호출하는 형식이기 때문에 doFilter메소드가 서블릿을 호출하는 것이니
+
+요청에 대한 서블릿 로직들이 모두 그 안에서 수행되는 거라고 할 수 있다.
+
+즉, chain.doFilter() 메소드 호출 이후에 어떤 로직을 만들어 놓으면, 
+
+요청 작업이 모두 끝나고 chain.doFilter() 뒤의 로직을 필터 우선순위 역순으로 수행한다는 것이다.
+
+이건 메소드의 호출 원리를 생각하면 당연한 내용이다. 메소드를 호출하고 그 로직이 끝나면 다음 로직을 수행한다.
+
+그래서 chain.doFilter 이전 로직에는 서블릿 호출 이전에 수행해야하는 공통 로직을 작성하고, 
+ 
+chain.doFilter 이후 로직에는 모든 요청 작업이 끝난 후 수행하는 공통로직을 작성하는 것이다.
+
+
+
+이렇게 만들어진 필터를 사용할 수 있도록 등록해야 하는데 FilterRegistrationBean이라는 객체를 빈으로 등록하면 된다.
+
+@Bean
+public FilterRegistrationBean 메소드이름(){
+    FilterRegistrationBean<Filter> filterRegistrationBean = new FilterRegistrationBean();
+    filterRegistrationBean.setFilter(new 필터생성자());
+    filterRegistrationBean.setOrder(우선순위);
+    filterRegistrationBean.addUrlPatterns(필터가 적용될 url패턴);
+
+    return filterRegistrationBean;
+}
+
+위와 같은 형태로 FilterRegistrationBean에 filter객체를 생성해서 등록하고 여러 설정을 세팅한 뒤 bean으로 등록하면 된다.
+
+사실 빈으로 등록하는 것이기 때문에 Filter에 @Component를 사용해도 등록된다.
+
+우선순위를 적용하고 싶으면 @Order 어노테이션을 사용하면 된다.
+
+하지만 이런 방식으로 등록하면 url패턴 적용이 안 된다는 문제가 있다. 무조건 모든 요청에 대해 적용된다.
+
+따라서 특정 url에만 작동하게 하고 싶다면 @Bean으로 등록해야 한다.
+
+뭐 @ServletComponentScan + @WebFilter 방식이라는 걸 이용하면 url지정이 가능하긴 한데, 이러면 또 우선순위 지정이 불가능하다.
+
+그러니 그냥 FilterRegistrationBean을 빈으로 등록해서 쓰자.
+
+여러개의 필터를 등록할 거면 FilterRegistrationBean를 빈으로 여러개 등록하면 된다.
+

@@ -1,0 +1,119 @@
+
+
+
+
+
+
+저번에는 Model을 통해 데이터를 다루는 내용과
+
+Spring의 DI기능을 이용하여 Service 객체의 의존관계 주입
+
+그리고 interface와 DI를 통한 Service의 객체의 결합력을 낮추는 것 까지 해 보았다.
+
+
+이번에는 연결정보의 결합력을 낮추는 일을 해 볼 것이다.
+
+여기서 연결정보라고 하면 데이터베이스와의 연결할 때 필요한 정보들을 말한다.
+
+즉, 데이터베이스와 연결하기 위해 우리가 사용하는 API들이 있는데
+
+그 API에게 제공하는 데이터베이스와 연결을 위한 정보들을 소스코드가 아닌 설정파일 내에 설정하겠다는 것이다.
+
+
+근데 왜 굳이 그걸 분리할 필요가 있는거죠?
+
+라고 한다면 추후에 서비스 배포 이후에 비밀번호 등을 바꾼다거나 사용하는 드라이버를 변경한다거나 
+
+사용하는 물리적인 데이터베이스의 하드웨어가 변경되어 url을 바꿔 주어야 하는 경우가 있을 수 있기 때문이다.
+
+
+하여튼 위와 같은 일이 일어났을 때 소스코드를 또 쳐 바꾸고 있을 수는 없다.
+
+이것은 매우 간단하다.
+
+이러한 연결정보의 분리를 위해 spring에서 제공하는 라이브러리가 있기 때문이다.
+
+바로 DriverManagerDataSource 라는 것이다.
+
+이름이 뭔가 어디서 들어 본 것 같지 않은가?
+
+맞다. 이것은 우리가 커넥션 풀을 공부할 때 나온 DataSource 인터페이스를 구현하는 클래스이다.
+
+
+DataSource에 대해 조금 알고 가면
+
+DataSource는 인터페이스인데 데이터베이스와의 Connection을 얻을 수 있도록 도와 주는 녀석이라고 생각하면 된다.
+
+DataSource를 구현하는 모든 객체는 JNDI에 등록된다.
+
+JNDI는 객체를 발견 및 참고하기 위한 API이다.
+
+그래서 우리가 커넥션풀에서 설정파일에 커넥션풀을 만들어 달라고 요청하고 반환타입으로 DataSource를 설정하면
+
+커넥션풀과 연결된 객체가 DataSource타입으로 반환되어 우리는 그 커넥션 풀에서 Connection을 하나씩 받아서 사용하는 것이다.
+
+
+위의 DriverManagerDataSource의 역할은 정말 단순하다.
+
+그냥 소스코드 상에서 이루어져야 할 연결정보를 설정파일에서 가능하도록 기능을 제공하는 것 뿐이다.
+
+그래서 DriverManagerDataSource를 통해 Connection을 얻을 때에는 마치 소스코드 상에서
+
+Driver 정보를 등록하고 DriverManager를 통해 Connection을 얻는 과정과 똑같다.
+
+그러니 요청이 들어올 때마다 새로운 Connection을 생성하는 것이다.
+
+즉, 위의 과정을 그냥 수행해 주는 녀석이고 그것을 연결정보의 분리의 기능과 함께 구현해 준 것이다.
+
+
+사실 위의 DriverManagerDataSource를 안 쓰고도 Driver, id, pw, url 등등에 대한 정보를
+
+IoC컨테이너에서 value 값으로 주입하여 사용해도 문제 없다.
+
+하지만 더 편하게 제공되는 인터페이스가 있는데 굳이 위처럼 하나하나 설정을 해 주는 귀찮은 일을 할 필요가 없다.
+
+
+하여튼 그럼 DriverManagerDataSource를 사용해 보도록 하자.
+
+어려운 내용도 아니고 그냥 가볍게 보고 넘어가면 될 것 같다.
+
+참고로 spring에서 제공하는 라이브러리라서 따로 라이브러리 다운이 필요하다.
+
+maven repository 'spring jdbc' 검색해서 다운받자.
+
+
+
+
+<bean name="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+    <property name="driverClassName" value="" />   
+    <property name="url" value="" />
+	<property name="username" value="" />
+	<property name="password" value="" />
+</bean>
+
+설정파일에 이렇게 추가하면 된다.
+
+딱 봐도 뭘 해야 할 지 보인다.
+
+DriverManagerDataSource에 setter가 있고 그 setter는 연결 정보를 입력하는 setter이다.
+
+driverClassName에는 당연히 dirver의 패키지 포함 ClassName이 String값으로 들어갈 것이고
+
+url은 jdbc:oracle:thin:@localhost:1521:xe 이걸 말한다. DBMS에 대한 url정보
+
+username이랑 password는 당연히 데이터베이스 계정과 비밀번호이다.
+
+
+하여튼 저렇게 연결정보를 세팅해 놓으면 우리가 getConnection을 호출할 때마다 저 정보를 바탕으로
+
+연결을 새로 만들어 반환해 주는 것이다.
+
+
+설정이 끝났으면 실제 사용을 해야 하는데 사용법은 아주 간단하다.
+
+Service클래스에 DataSouce 데이터 타입의 멤버변수를 하나 만들고 setter를 만든다.
+
+그리고 xml설정파일에서 그 해당 Service빈의 property로 위에서 설정한 dataSource를 주입해 주면 된다.
+
+Service클래스의 소스코드상에서 datasource객체를 통해 getConnection 메소드를 사용해서 커넥션을 얻고 나머지는 똑같다.
+

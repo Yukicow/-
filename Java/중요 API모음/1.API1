@@ -1,0 +1,75 @@
+
+
+
+java에서 자주 사용되는 API를 가볍게 정리만 한 것이라고
+
+실제 사용할 때에는 검색을 통해 그 때 그 때 사용하자.
+
+
+
+
+1. Random
+
+Random 클래스는 난수를 생성하는 클래스이다.
+
+new Random()을 통해 생성된 객체를 통해 난수를 만드는 메소드를 이용할 수 있다.
+
+
+
+2. StringTokenizer
+
+StringTokenizer 클래스는 문자열을 토큰화하는 클래스이다.
+
+new StringTokenizer("문자열", "구문자") 형식으로 객체를 생성한다.
+
+인자로 넘긴 문자열을 구문자에 따라 토큰화 해서 분류하는 것이다. 구문자를 생략하면 띄어쓰기로 구분한다.
+
+예를 들어 new StringTokenizer("2000/04/11", "/") 로 객체를 생성하면
+
+객체 내부적으로 /단위로 문자열을 분리한다. 2000,04,11이 된다.
+
+StringTokenizer 내부적으로 저렇게 분리된 토큰들을 다루는 메소드가 많이 있으니 잘 찾아서 사용하도록 하자.
+
+기본적인 메소드들은 hasMoreTokens()와 nextToken이 있다. iterator의 hasnext와 next와 비슷하다.
+
+메소드가 실행될 때 마다 인덱스가 증가하는 형식이다.
+
+
+
+3. Timer, TimerTask
+
+Timer는 일정 시간 후에 특정 로직을 수행하도록 하는 클래스이다.
+
+TimerTask는 Timer 객체에 의해 실행될 로직이 구현되는 클래스이며 추상 클래스이다.
+
+TimerTask를 상속 받는 클래스는 run()메소드를 재정의 해야 하며 그 안에 만들어진 로직이
+
+Timer 객체의 schedule()메소드에 의해 실제 실행되는 로직이다.
+
+
+
+4. String
+
+String 클래스에도 java에서 자주 쓰이는 메소드들이 많이 있다.
+
+알아 두면 좋은 것들이 많으니 몇개만 정리해 보겠다. 예시의 알파벳은 String을 의미.
+
+a.concat(b) : 문자열 연결
+a.substring(int) : int에 해당하는 인덱스까지 문자열을 자름
+a.toUpperCase : 문자열을 대문자로 변경  
+a.toLowerCase : 문자열을 소문자로 변경
+a.charAt(int) : int에 해당하는 문자열의 인덱스 위치의 문자값 출력
+a.indexOf(char) : char에 해당하는 문자의 인덱스값 출력
+a.trim() : 문자와 문자사이를 제외한 나머지 공백 제거. 즉, 띄어쓰기 말고 불필요한 공백 제거
+a.replace(char1, char2) : char1에 해당하는 '모든' 문자를 char2로 바꿈
+a.replaceAll("b","c") : b에 해당하는 문자열을 c로 바꿈
+
+*replace와 replaceAll은 실제 String객체에는 영향을 주지 않음.
+
+
+
+5. System.currentTimeMillis()
+
+현재 시각을 밀리초 단위로 출력하는 System 클래스의 static 메소드.
+
+개발자들이 걸린 시간을 측정하는데에 많이 사용한다. 속도 테스트용으로 사용.

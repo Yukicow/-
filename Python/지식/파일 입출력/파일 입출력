@@ -1,0 +1,75 @@
+파일을 열어서 안에 있는 내용을 불러내거나 새롭게 쓸 수 있는 기술.
+
+1.
+
+open 
+
+파일을 불러오는 것.
+
+변수를 만들고 open을 이용에 파일 불러오기.
+
+변수 선언 이유) 주관적 견해
+변수를 선언함으로서 훨씬 간략해지기 때문 당장 .wirte나 .read 만 봐도 앞에 변수 쓰고 뒤에 .~~만 붙여서 추가하고 읽어내면 되는데
+변수가 없으면 이 모든 작업을 길게 풀어서 써야함. 
+
+
+
+ex)
+yadong_file = open("~~", "~", encoding="utf8")
+"~~"라는 파일을 "~"라는 목적으로 여는 것이라는 뜻.
+"encoding = utf8"을 지정 안 해주면 한국어가 가끔 이상한 문자로 나오기도 한다고 함.
+그러니 무조건 정의해주셈.
+그리고 파일은 open 했으면 닫아줘야 함.
+닫을 때에는 변수.close 로 닫아주면 됨 -> yadong_file.close
+*이유)
+사실 이 문장은 생략해도 된다. 
+프로그램을 종료할 때 파이썬 프로그램이 열려 있는 파일의 객체를 자동으로 닫아주기 때문이다. 
+하지만 close()를 사용해서 열려 있는 파일을 직접 닫아 주는 것이 좋다. 
+쓰기모드로 열었던 파일을 닫지 않고 다시 사용하려고 하면 오류가 발생하기 때문이다.
+
+
+"~"에 w를  적으면 write -> 쓰는 목적(덮어쓰기)
+r를 적으면 read -> 읽어내기 위한 목적(쓰여진 파일에 있는 정보 불러내기)
+a를 적으면 append -> 파일에 뭔가 추가하기 위한 것(원래 파일에 뭔가 추가)
+
+ex)
+1. w(write)
+
+yadong_file = open("yadong.txt", "w", encoding="utf8")
+print("1.야기 나나.zip", file = yadong_file) #파일에 내용 입력하는 방식1. 줄바꿈 있음
+yadong_file.write("2.사쿠야 유아.zip\n") #파일에 내용 입력하는 방식2. 줄바꿈 없음
+yadong_file.close()
+
+
+2.a(append)
+
+yadong_file = open("yadong.txt", "a", encoding="utf8")
+yadong_file.write("3.오구라 유나.zip\n") 
+yadong_file.write("4.아스카 키라라.zip\n") #유나와 키라라 내용이 새롭게 내용이 추가됨
+yadong_file.close()
+
+3. r(read)
+
+yadong_file = open("yadong.txt", "r", encoding="utf8")
+print(yadong_file.read()) #.read()는 yadong_file에 있는 모든 내용을 불러와서 출력
+print(yadong_file.readline()) #.readline()줄 별로 읽는 것. 읽은 후 커서는 다음 줄로 이동.
+yadong_file.close()
+
+응용)
+
+1.반복문을 이용한 .readline()으로 전부 불러내기.
+
+while true:
+    line = yadong_file.readline() #커서가 다음 줄로 넘어가기 때문에 반복문을 써도 밑에 값을 읽어냄
+    if not line
+        break
+    print(line, end="")
+
+
+2. list와 .readlines()를 이용
+
+lines = yadong_file.readlines()
+
+for line in lines
+    print(line, end="")
+

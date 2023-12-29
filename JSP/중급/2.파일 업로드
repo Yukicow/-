@@ -1,0 +1,356 @@
+
+
+
+
+
+
+
+전 항목에서 좀 긴 내용을 다뤘지만 제대로 이해를 했다면
+
+이번 강은 크게 문제될 것이 없다.
+
+
+
+
+파일 업로드
+
+
+파일 업로드 기능은 두 가지 방법이 있는데
+
+하나는 MultipartRequest를 제공하는 라이브러리를 이용하는 방법이고
+
+다른 하나는 기본 라이브러리만을 이용해서 하는 방식이다.
+
+
+파일이 jsp 파일 내에서 form 태그를 통해 전송될 때에는 method는 post방식이어야 하고 
+
+enctype속성은 속성값으로 multipart/form-data를 사용한다.
+
+그럼 이제 파일은 온전한 형태로 서버로 잘 넘어갈 것이다.
+
+
+그럼 실질적으로 파일을 업로드 해야 하는데 어떻게 하느냐
+
+MultipartRequest 객체를 만들면 된다.
+
+Multipart방식을 통해 얻은 데이터에는 파일 뿐만아니라 모든 데이터들이 다 들어가 있다.
+
+파일,input태그를 통해 받은 인자 등등 이렇게 받은 모든 데이터를 다루는 객체가 MultipartRequest객체이다.
+
+
+MultipartRequest 객체는 생성자를 호출해서 생성할 수 있는데
+
+MultipartRequest() 생성자는 인자를 많이 필요로 하는데 
+
+request객체, 파일이 저장될 경로, 파일 최대 크기,문자 인코딩 방식,파일 이름이 겹쳤을 때 해결해 줄 객체
+
+이렇게 총 5개를 필요로 한다. 정확히는 생성자가 여러개라 저 중에 필수적인 것만 넘겨도 되지만
+
+우리는 다 넘겨 주는 게 가장 안정적이고 좋다.
+
+
+
+1. request객체는 그냥 넘겨 주면 된다.
+
+
+2. 파일 경로는 application.getRealPath("FilePath"); 메소드를 통해 경로를 따로 String 변수에 저장해 놓고 넘긴다.
+
+각 운영체제나 프로젝트의 저장경로에 따라 다 다르기 때문에 확실하게 하기 위해서이다.
+
+
+3. 파일 최대 크기도 int 변수에 저장해서 사용한다. 
+
+바이트 단위이기 때문에 10mb를 만들어 주려면 1024 * 1024 *10을 저장해야 한다.
+
+
+4. 문자 인코딩 방식은 utf-8을 쓰자
+
+
+5. FileRenamePolicy 객체를 받기 때문에 new DefaultFileRenamePolicy()를 통해 기본 FileRenamePolicy객체를 만들어 넘긴다.
+
+
+
+이렇게 하면 우리가 넘긴 업로드 path에 파일이 저장됨과 동시에 각 데이터(인자,파일)들이 
+
+MultipartRequest객체에 담기고 우리는 이를 메소드를 통해 사용할 수 있게 된다.
+
+# 생성자 내부적으로 받은 path에 파일을 업로드 하는 기능이 있다.
+
+
+
+
+MultipartRequest객체의 주요 메서드를 알아 보자.
+
+
+우리가 input태그에 사용한 name을 이용한다.
+
+file은 file에 대한 메소드로 다루고 Parameter는 Parameter에 대한 메소드로 다룬다.
+
+
+1. String getContentType(String name) : 어떤 형식의 파일인 지 리턴
+
+
+2. File getFile(String name) : File 객체를 리턴(우리가 업로드한 파일을 파일 객체로 리턴 [파일객체 = 파일])
+
+
+3. Enumeration getFileNames() : Enumeration 형식으로 업로드된 파일 이름들을 리턴
+
+
+4. String getFilesystemName(String name) : 업로드된 파일 이름 리턴
+
+(동일한 파일이 존재하는 경우 파일이름이 변경됨)
+
+
+5. String getOriginalFileName(String name) : 원본 파일이름 리턴
+
+(실제로 업로드한 파일의 원본 이름)
+
+
+ㅡㅡㅡㅡㅡㅡㅡㅡ위의 5개가 파일에 대한 메소드ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
+
+
+ㅡㅡㅡㅡㅡㅡㅡㅡ밑의 3개가 Parameter에 대한 메소드ㅡㅡㅡㅡㅡㅡㅡㅡㅡㅡ
+
+
+인자를 받아오는 메소드들은 파일과는 무관하다.
+
+input태그 등으로 받은 인자만 받아 온다.
+
+
+6. String getParameter(String name) : 인자값 받아오기
+
+request.getParameter() 와 동일한 기능 수행
+
+
+7. Enumeration getParameterNames() : Enumeration 형식으로 모든 인자들의 name 속성값 가져오기
+
+
+8. String[] getParameterValues(String name) : 복수의 값들을 선택할 수 있는 경우, 값들 가져오기
+
+(예를 들어 checkbox에 사용할 수 있음)
+
+
+
+
+
+
+
+두 번 째 방법은
+
+기본적으로 request에서 제공하는 getPart메소드를 통해 Part객체를 받아 파일 업로드를 하는 방식이다.
+
+이 방법을 하기 전에는 어노테이션이나 xml태그를 이용해 config를 설정해야 하는데 
+
+어노테이션이 편하니 어노테이션으로 설명하겠다. # xml방식 궁금하면 MultipartConfig 라고 검색하면 나온다.
+
+@MultipartConfig{
+    location="",
+    fileSizeThreshold= ,
+    maxFileSize= ,
+    maxRequestSize= ,
+}
+
+설정할 내용은 총 네 가지이다.
+
+location은 파일이 저장될 위치가 아니고 임시로 저장될 위치이다.
+
+fileSizeThreshold는 업로드될 파일의 사이즈가 일정 수치를 넘어갈 경우 파일 업로드를 할 때에 메모리를 이용하면 부담이 크니
+
+메모리가 아니고 디스크를 이용해서 파일에 대한 데이터를 저장하고 업로드를 하도록 하는 녀석이다. 
+
+그리고 그 디스크의 디렉토리 위치가 location에 지정한 위치이다.
+
+fileSizeThreshold에는 그 일정 수치를 적어 주는 것이다.
+
+MaxFileSize는 업로드될 파일들 각각의 최대 가능 크기를 지정한다.
+
+maxRequestSize는 모든 업로드될 파일의 크기를 합쳐 최대 업로드 가능 파일 크기를 지정한다.
+
+
+이렇게 설정을 하고 나면 일반적인 String Parameter는 getParameter메소드를 통해 호출이 가능해진다.
+
+그럼 인자로 넘어온 String 값들은 평소처럼 getParameter를 사용하고 파일에 대한 부분만 신경쓰면 된다.
+
+
+파일 다루는 법은 위에서도 말했듯 request 객체의 getPart로 Part객체를 받아 다뤄야 한다.
+
+request.getPart("Name(사용자로부터 받은 인자의 name 속성값)") 메소드는 인자로 받은 값들 중 원하는 것만 다룰 수 있다.
+
+request.getPart()의 인자로 file의 name 속성값을 넣어 주면 Part 객체가 생성된다.
+
+request.getParts()라고 해서 여러 인자를 한 번에 받을 수도 있는데 그건 밑에서 다루도록 하자.
+
+
+Part 객체에는 Write() 라는 메소드가 있다. 파일 이름을 인자로 받는다.
+ 
+이 메소드는 @MultipartConfig 어노테이션 또는 web.xml에 태그를 통해 입력한 location 경로를 상대경로로 해서
+
+파일 업로드 위치와 파일 이름을 합쳐 인자로 넘기면 그 위치에 그 파일이름으로 파일을 업로드 시키는 메소드이다.
+
+location이 "/test1" 라면 Write("test2/test.txt")라고 하면 test1 디렉토리의 하위 test2에 test.txt파일이 저장된다.
+
+
+
+하지만 어노테이션이나 web.xml을 통해 정의해 두지 않았다면
+
+InputStream과 OutputStream을 이용해야 한다.
+
+Part객체에는 getInputStream() 메소드가 있다.
+
+Part 객체가 저장하고 있는 파일데이터를 읽어올 수 있는 InputStream을 반환한다.
+
+그럼 이제 OutputStream을 이용해 원하는 위치에 InputStream으로 읽은 파일 데이터를 output하면
+
+그 위치에 파일이 저장될 것이다.
+
+
+그 방법은 아래와 같다.
+
+Part filePart = request.getPart("file_name")
+InputStream fis = filepart.getInputStream
+
+String fileName = filePart.getSubmittedFileName()
+
+String realPath = request.getServletContext().getRealPath("경로")
+
+String filePath = realPath + File.separator + fileName
+
+FileOutputStream fos = new FileOutputStream(filePath)
+
+
+byte[] buf = new byte[원하는 크기]
+
+int size;
+
+while((size = fis.read(buf)) != -1){
+    fos.write(buf,0,size)
+}
+
+
+getSubmittedFileName()은 사용자가 파일을 업로드할 때 지정한 파일 이름을 가져오는 메소드이다.
+
+우리가 디렉토리에 파일을 업로드할 때 저장되는 파일의 이름으로 쓰기 위해 가져온 것이다.
+
+getRealPath()는 저장할 파일의 실제 위치를 구하기 위해서 사용했다.
+
+여기서 경로로 지정하는 값은 절대경로와 상대경로로 쓸 수 있는데 절대경로로 getRealPath("/test")
+
+이렇게 넣으면 프로젝트의 절대경로 즉, webapp기준에서 test디렉토리이다.
+
+하지만 이 경로도 사실은 완전한 절대 경로는 아니다.
+
+프로젝트의 워크스페이스의 경로는 실제 앱이 실행되고는 앱에서 사용할 디렉토리와 매핑되는 경로를 갖는데
+
+위의 realPath 또한 그 실제 앱에서 사용하게 되는 디렉토리의 절대경로를 구하는 것이다.
+
+workspace에 test라는 폴더를 만들고 파일업로드가 끝나도 실제로 파일이 업로드된 위치는 
+
+workspace의 test폴더가 아닌 앱에서 사용하는 매핑 폴더에 있다.
+
+
+filePath는 OutputStream으로 넣게될 실제 파일 위치와 이름을 합친 것이다. 
+
+파일 위치를 넘길 때 저장할 파일이 무슨 이름으로 저장될 지 파일 이름까지 지정해 주어야 하기 때문에 
+
+realPath와 fileName을 함께 넣었다.
+
+
+근데 File.separator는 뭐죠?
+
+File.separator는 자바에서 제공하는 시스템별 이름 구분자이다.
+
+윈도우의 경우 디렉토리를 구분할 때에 '\'를 사용한다. 하지만 다른 OS는 어떨까?
+
+각각 다르다.
+
+realPath와 fileName을 더할 때에 이런 구분자를 넣어야 하는데 각 환경마다 이 구분자가 다르기 때문에
+
+File.separator를 통해 그 시스템 환경에서의 구분자를 자동으로 넣어 주는 것이다.
+
+만약 윈도우에서만 저 파일 업로드 기능을 쓴다면 File.separator대신 '\\'를 썼어도 문제 없었을 것이다.
+
+
+
+하여튼 이제 실제 파일 위치까지 정했으니 그 위치와 연결되는 OutputStream 객체를 생성하고 데이터를 output 하면 된다.
+
+# File을 업로드 하는 것이니 FileOutputStream을 생성
+
+
+파일의 크기가 클 수 있으니 byte[] buf = new byte[원하는 크기]를 통해 버퍼를 만들어 주었다. 
+
+# 숟가락으로 퍼 나르는 것보다 양동이가 빠르다.
+
+그리고 size = fis.read(buf) 메소드는 InputStream 객체 fis에서 읽어들인 값을 인자로 받은 배열에 넣고  
+
+읽어들인 값의 개수(위의 경우 바이트 개수)를 반환하는 메소드이다. 읽어들인 값이 없다면 -1을 반환한다.
+
+만약 읽어들인 값이 있다면 fos.write(buf,0,size) 명령어가 시행되며 OutputStream객체 fos를 통해 buf에 저장된 값을 
+
+0부터 size까지 즉, 0 ~ (size - 1)까지 우리가 지정한 디렉토리 위치에 output한다.
+
+이 과정이 모두 끝나고 나면 우리가 지정한 위치에 우리가 지정한 이름으로 파일이 업로드되어 있을 것이다.
+
+
+하지만 위의 과정은 단일 파일을 업로드 하는 방법이다.
+
+여러 파일을 업로드 할 때에는 또 다르게 해야 한다.
+
+하지만 파일을 업로드 하는 방식은 위와 동일하고 반복문을 통해 처리만 해 주면 된다.
+
+
+우리는 위에서 request.getPart("인자 name 속성값")를 통해 그 속성값에 해당하는 인자만 따로 Part객체로 불러들였다.
+
+하지만 그렇지 않고 모든 인자에 대해 Part객체를 반환하는 메소드도 있다. 바로 request.getParts()이다.
+
+이 메소드는 모든 인자에 대한 Part객체를 담아 Collection 인터페이스 타입으로 반환한다.
+
+우리는 이 중에서 업로드 파일에 해당되는 것들만 따로 골라내서 위에 단일 파일 업로드 방식을 적용하면 된다.
+
+
+Collection<Part> parts = request.getParts()
+
+for(Part p : parts){
+    if(!p.getName().equals("file")) continue;
+
+    Part filepart = p
+
+
+    InputStream fis = filepart.getInputStream
+
+    String fileName = filePart.getSubmittedFileName()
+
+    String realPath = application.getRealPath("상대경로")
+
+    String filePath = realPath + File.separator + fileName
+
+    FileOutputStream fos = new FileOutputStream(filePath)
+
+
+    byte[] buf = new byte[원하는 크기]
+
+    int size;
+
+    while((size = fis.read(buf)) != -1){
+        fos.write(buf,0,size)
+    }
+}
+
+
+InputStream 부분 부터는 위의 단일 파일 업로드와 같은 내용이고 그 위만 보면
+
+request.getParts()를 통해 Part 객체들이 담긴 Collection 인터페이스 객체를 받았고
+
+forEach문을 통해 parts에 담긴 Part객체들을 하나씩 p에 담아서 로직을 수행한다.
+
+만약에 p.getName()의 값이 "file"(파일에 지정한 name 속성값)이 아니라면 무시하고 continue를 한다.
+
+"file"이 맞다면 그 Part 객체는 업로드할 파일에 대한 객체이니 파일 업로드 로직을 수행한다.
+
+Part는 file에 대한 데이터를 받는다고 되어 있는 것 같은데 업로드 외에도 특정 파일에 대한
+
+데이터가 있을 경우 그것을 제외하기 위함인 듯 하다.
+
+
+
+위의 원리로 MultipartRequest말고 파일을 업로드 할 수도 있다. 하지만 좀 복잡하다.
+

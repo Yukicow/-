@@ -1,0 +1,58 @@
+
+
+
+
+
+
+
+예전에 배운 Spring Data JPA에서 편리하게 제공하는 페이징 기능을 사용하기 위해서는  Pageable객체가 필요하다.
+
+Spring Data JPA는 Pageable객체를 생성할 수 있는 커스텀 ArgumentResolver를 지원해서 
+
+Pageable객체를 Controller에서 argument로 받아 사용할 수 있게 해 준다.
+
+원래는 따로 우리가 설정을 통해서 사용 가능한 기능이지만, Spring boot를 사용할 경우 자동 설정되어 있어 바로 사용 가능하다.
+
+
+Controller에서 인자로 Pageable을 바로 받으면 된다.
+
+그럼 쿼리 파라미터나, post의 xxx-... 방식에서 body에 page,size,sort 라는 인자를 찾아서 그 값을 토대로 Pageable객체를 생성하는 것이다.
+
+각각 Pageable의 생성에 필요한 인자인 시작 페이지, 조회 개수, Sort객체와 매핑된다.
+
+이 때 없는 인자들이 있을 경우에는 default값을 사용한다.
+
+page,size,sort의 default값은 각각 0, 20, Sort.unsorted() -> Sort.by(new Order[0])이다.
+
+이런 default값은 글로벌 설정이나 Controller에서 Pageable 인자 앞에 @PageableDefault 어노테이션을 붙여 개별 설정이 가능하다.
+
+글로벌 설정은 쉬운 내용이니 구글에 검색하면 바로 나올 것이고, @PageableDefault는 옵션으로 값을 직접 지정 가능하다.
+
+
+
+사실 page나 size는 그냥 값을 넘기면 되는데, sort는 Sort객체와 매핑되어야 한다. 그럼 인자를 어떤 식으로 넘겨야 할까?
+
+sort는 필드명과 OrderBy의 형태인 ASC,DESC에 따라 객체가 생성되기 때문에 'sort=필드명,ASC 또는 DESC' 형태로 넘기면 된다.
+
+만약에 여러개의 필드명을 OrderBy 하고 싶다면 sort를 여러개 넘기면 된다.
+
+예를 들어 comi.com이라는 사이트가 있다고 하면
+
+url의 경우 comi.com?sort=name,DESC&sort=age,ASC&sort=team.name,DESC
+
+위와 같은 형태로 sort를 여러개 넘기면 되는 것이다.
+
+
+하지만 위의 쿼리 파라미터를 보면 알겠지만 조금 문제점이 있다.
+
+Entity의 필드명이 sort에 그대로 드러나는 형태를 보이고 있는 것이다.
+
+심지어는 team.name은 연관관계까지 유추가 가능한 형태이다.
+
+이런 방식은 Entity가 직접적으로 노출되는 형태이기 때문에 조금 문제가 될 수 있다.
+
+그래서 간단한 경우는 괜찮은데 좀 복잡한 경우에는 Sort에 대한 부분은 따로 넘겨서 사용하는 게 좋다는 것 같다.
+
+근데 이게 뭔가 경우의 수에 따라 이렇게 정렬이 확확 달라지는 경우가 많을까 싶다.
+
+일단 그냥 쓰다가 문제 있을 것 같으면 바꿔도 될 듯..?

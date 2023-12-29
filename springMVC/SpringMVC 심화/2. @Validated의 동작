@@ -1,0 +1,318 @@
+
+
+
+
+
+
+
+
+
+뭔가 전의 글을 읽었다면 위화감이 들었을 것이다.
+
+@Validated를 사용하면 AOP를 이용한 검증 과정이 일어난다고 했는데, 
+
+그럼 Controller에 넘길 인자를 생성하는 과정에서 WebDataBinder에 의해 검증이 일어나고
+
+그 다음에 AOP가 적용된 Controller가 호출되는 과정에서 검증이 한 번 더 일어난다는 거 아닌가..?
+
+결론 부터 말하면 맞다. 웃기게도 두 번 검증된다.
+
+
+
+실험이 완벽한 것은 아니지만, 여러 가지 시험을 해 본 결과 그나마 제일 나은 답안을 찾았다.
+
+@Validated는 Spring에서 @Valid에 그룹핑 기능을 추가하기 위해 만든 어노테이션인데, 
+
+거기에 추가하여 클래스 단위에 사용하면 AOP를 이용한 검증 기술이 적용되도록 구현한 어노테이션이라고 보면 된다.
+
+쉽게 생각하면 @Validated를 핸들러 메소드 인자에 사용하면 @Valid처럼 WebDataBinder에게 참조되는 어노테이션이 되는 것이고,
+
+클래스에 사용하면 AOP기술을 적용하기 위한 어노테이션으로 동작한다고 보면 된다.
+
+
+우리가 Spring에서 제공하는 Validator인터페이스를 구현해서 등록하는 것은
+
+클래스 단위에 @Validated를 사용해서 검증할 때에는 위처럼 등록한 Validator들과는 관계가 없다.
+
+# ContratintValidator는 핸들러 메소드와 클래스 단위 모두 동작한다.
+
+물론 둘 다 JSR 표준 스펙에 대한 검증기들을 사용하는 것은 똑같다.
+
+
+하지만 서로 사용하는 방식이 다르다.
+
+WebDataBinder가 사용하는 Valdiator는 javax가 제공하는 Validator와 Spring이 제공하는 Valdiator 아무거나 상관 없이 사용한다.
+
+하지만 클래스 단위에서 사용하는 Validator는 javax표준의 Validator만을 사용한다.
+
+스프링 부트의 경우는 기본으로 JSR 표준을 구현한 Validator인 LocalValidatorFactoryBean을 등록하는데, 
+
+javax의 ValidatorFactory를 구현하는 객체이기 때문에 둘 다 이걸 사용하게 된다.
+
+
+하지만 커스텀의 경우가 다르다. 우리가 webConfig에서 getValidator를 통해 직접 만든 validator를 글로벌 등록할 수 있던 걸 기억하는가?
+
+또는 initBinder를 통해서 등록했던 validator를 기억하는가? 이 방식을 통한 Validator 등록은 
+
+클래스 레벨의 @Validated에 영향을 주지 않는다. 
+
+당연하게도 initBinder는 WebDataBinder가 validator를 얻을 때 참조하는 값이고
+
+getValidator를 통한 등록은 Spring제공의 Validator를 빈으로 등록하는 방식이다.
+
+그래서 클래스 레벨의 @Validator는 영향을 받지 않는다.
+
+
+클래스 레벨의 @Validator는 빈으로 등록된 javax Validator를 받아서 setting하는데,
+
+이 때 만약 빈으로 등록된 javax Validator가 없어서 null이 들어온다면 알아서 
+
+Validation.buildDefaultValidatorFactory()를 호출해서 ValidatorFactory객체를 반환 받고 그것을 Validator로 사용한다.
+
+Validation.buildDefaultValidatorFactory()는 xml을 참고해서 기본 거기에 설정된 ValidatorFactory객체를 만드는 메소드인 듯 하다.
+
+아마 Spring을 사용한다면, 따로 설정이 필요할 것 같고 스프링 부트는 기본값을 따로 설정하지 않았을까 한다.
+
+
+하여튼 서로 이렇게 다르게 동작하기 때문에 영향을 미치질 않는다.
+
+여기서 신경써야할 점은 스프링 부트에서 autoConfig를 통해 자동 등록해 주는 LocalValidatorFactoryBean는
+
+@ConditionalOnMissingBean(Validator.class) 어노테이션을 달고 있다.
+
+# 여기서 Validator는 Spring에서 제공하는 Validator.class이다.
+
+그래서 우리가 빈으로 Spring에서 제공하는 Validator를 등록하면 LocalValidatorFactoryBean는 사용되지 않는다.
+
+getValidator() 메소드로 꼭 등록 안 하고 직접 우리가 bean으로 등록만 해도 Validator는 대체된다는 것이다.
+
+다행히 여기서 클래스 레벨의 @Valdiated는 javax표준의 Validator를 주입받아 사용하기 때문에 딱히 영향은 안 받는다.
+
+LocalValidatorFactoryBean가 사용되지 않게 돼도, 어차피 주입 받은 게 null일 경우 
+
+알아서 설정을 참고하여 기본 ValidatorFactory객체를 사용하기 때문이다.
+
+
+하지만 만약 Bean으로 javax표준의 Validator를 직접 주입해 버리면 문제가 된다.
+
+이럴 경우에는 AOP에서 사용되는 Validator에 우리가 등록한 javax표준의 Validator가 주입되게 된다.
+
+이러면 빼도박도 못하고 그냥 그 Validator가 사용된다.
+
+물론 의도하고 Validator를 정말 표준에 맞게 잘 만들어서 모든 어노테이션에서 동작하게 만들었다면 문제는 없는데,
+
+혹시 의도하지 않았는데 이런 상황이 발생한다면 이런 경우의 수를 잘 고려해 보도록 하자.
+
+
+
+핸들러 메소드의 인자에 사용되는 @Validated(Cross-parameter Constraint)는 @Valid의 대체용이라고 생각하면 된다.
+
+원래는 @Valid를 사용해야 하는데, @Valid에는 '그룹'기능이 없다는 단점이 있다.
+
+그것을 보완하기 위해서 Spring에서는 @Validated를 Cross-parameter Constraint로 사용할 경우 @Valid와 똑같이 동작하지만,
+
+그룹 기능을 지원하는 용도로 사용하라고 만들어 준 것이라고 생각하면 될 것 같다.
+
+클래스 단위의 @Validated는 완전히 '검증' 그 자체에 대한 기술을 적용하기 위한 어노테이션이다. 
+
+아무대서나 검증을 사용하기 위해서 JSR기술 스펙을 이용하여 AOP를 적용한 Spring제공의 '검증' 기술일 뿐이다.
+
+
+
+그래서 결론은 이거다.
+
+@Valdiated라는 어노테이션은 Spring에서 만든 어노테이션이고,
+
+Cross-parameter Constraint로 들어가게 되면 @Valid의 그룹핑을 지원하는 용도이고,
+
+클래스 단위나 메소드 단위에 들어가면 Spring에서 제공하는 AOP 검증 기술 적용 용도라는 것이다.
+
+
+
+Variant of JSR-303*s Valid, supporting the specification of validation groups. 
+
+Designed for convenient use with Springs JSR-303 support but not JSR-303 specific.
+
+Can be used e.g. with Spring MVC handler methods arguments. 
+
+Supported through SmartValidator*s validation hint concept, with validation group classes acting as hint objects.
+
+Can also be used with method level validation, indicating that a specific class is supposed to be validated at the method level 
+
+(acting as a pointcut for the corresponding validation interceptor), 
+
+but also optionally specifying the validation groups for method-level validation in the annotated class. 
+
+Applying this annotation at the method level allows for overriding the validation groups for a specific method 
+
+but does not serve as a pointcut. 
+
+a class-level annotation is nevertheless necessary to trigger method validation for a specific bean to begin with. 
+
+Can also be used as a meta-annotation on a custom stereotype annotation or a custom group-specific validated annotation.
+
+# * -> ' 라고 생각하면 됨, 문자열 처리되길래 바꿈ㅋㅋ
+
+
+위는 @Valdiated 어노테이션에 대한 설명인데, 대충 읽어보면
+
+뭔가 어려운 내용이지만 앞부분을 보면 
+
+'JSR-303의 group을 지원하기 위해 설계되었지만 그것만은 아니다.' 라고 되어 있다.
+
+즉, @Valdiated에는 사용되는 곳에 따라 기능이 달라진다는 것이다.
+
+
+method레벨에 사용하면 그룹핑을 지원하며, 이는 클래스 레벨에 @Valdiated를 사용했을 때 그룹핑 기능이라고 생각하면 된다.
+
+Cross-parameter Constraint로 @Valdiated를 사용하면 @Valid에 그룹핑 기능을 지원하지만,
+
+클래스 단위에 @Valdiated가 붙었을 때에는 그룹핑 기능을 지원하는 게 없다. 그래서 메소드 단위에 @Valdiated를 넣어서 지원하는 듯 하다.
+
+그냥 Cross-parameter Constraint로 쓰는 @Valdiated를 클래스 레벨의 @Validated에서는 메소드에 쓴다고 생각하면 된다.
+
+
+그리고 클래스 레벨의 @Valdiated는 메소드가 시작될 때 검증을 수행하게 한다고 되어 있다.
+
+이게 바로 AOP가 적용되어 검증을 수행한다는 내용인 것 같다.
+
+
+
+그래서 결과적으로 @Valdiated를 핸드러 메소드의 인자단위로 사용하면 두 번 검증이 일어나지는 않는다.
+
+하지만 Controller의 클래스 단위에 사용하고 Cross-parameter의 인자에 @Valid 어노테이션을 사용하게 되면 
+
+WebDataBinder에 의해 한 번 AOP에 의해 한 번, 총 두 번 검증이 일어날 것이다.
+
+그래서 웬만하면 Cross-parameter Constraint로 @Validated를 사용하는 게 좋다.
+
+initBinder를 통한 커스텀 기능은 필요하다면 간편하고 좋기 때문이다. 
+
+문제는 이런 커스터마이징의 경우 Controller한정으로 적용된다는 것이지만 말이다.
+
+참고로 @PathVariable이나, @RequestParam의 경우는 내부적으로 Validate를 하지 않는 듯 하다.
+
+그래서 만약 @PathVariable이나 @RequestParam을 사용할 때에는 Vadliate기능을 사용하고 싶다면
+
+클래스 단위의 @Valdiated를 사용하고 밑에 나온 사용법대로 사용하면 된다.
+
+
+또, 커스텀 어노테이션을 통한 검증을 하고 싶다면 ConstraintValidator를 구현해서 사용하는 게 좋다.
+
+ConstraintValidator를 이용하면 Cross-parameter Constraint과 클래스 레벨에서 모두 사용 가능하다.
+
+클래스 레벨일 때 특히나 더 범용성이 크다.
+
+
+왜냐하면 Class level에 붙이는 @Valdiated는 AOP기술이고, 메소드를 호출기 전에 검증작업을 거치는데,
+
+이 말은 이미 인자들이 모두 생성되 상태이고 그에 대한 검증이 가능하다는 말이기도 하다.
+
+그렇기 때문에 메소드의 인자들 앞에 여러 가지 제공되는 어노테이션들을 붙여서 검증할 수 있다.
+
+그래서 메소드의 인자들에 @NotNull, @Size, @Min, @Max 등등이 사용 가능하다.
+
+그리고 우리가 ConstraintValidator를 만들어서 등록하고 커스터마이징한 어노테이션도 여기에 포함되는 듯 하다.
+
+그럼 메소드 호출 전에 이러한 어노테이션을 확인해서 검증 작업을 처리하고 유효하다면 메소드를 호출할 것이다.
+
+# 커스터마이징 어노테이션의 경우 ConstraintValidator를 생성하고 이 Validator가 처리할 어노테이션을 생성하면 
+
+# 자동으로 Validate되는 대상이 되도록 하는 어노테이션이나 로직이 있는 건지,
+
+# 아니면 로직상으로 ConstraintValidator들이 검증할 기회를 주도록 되어 있는 지는 모르겠지만 어쨋든 동작한다.
+
+# 이 부분은 정확히는 모르겠지만 우리가 커스터마이징한 어노테이션도 검증 대상에 함께 포함되니 그렇게 알고 쓰면 될 것 같다.
+
+그리고 인자에 사용가능한 어노테이션 중 @Valid가 있는데, 이녀석을 사용하면 @Valid가 붙은 객체의 필드에 
+
+위와 같은 @NotNull, @Size, @Min, @Max 같은, 또는 우리가 커스터마이징 어노테이션이 있을 경우 
+
+그것들에 대해 필드 value가 유효한 지 검증을 거친다.
+
+마치 Controller에서 @Valid, @Validated를 사용했을 때 WebDataBinder에 의해 검증 과정을 거치는 것과 똑같이 동작한다.
+
+
+마치 Controller에서의 동작과 비슷하다는 말에 조금 주의점이 있다.
+
+이 말은 Controller에서 Cross-parameter Constraint @Validated의 한계점과도 연결된다.
+
+Cross-parameter Constraint @Validated를 사용하는 경우는, 
+
+그 인자를 ArgumentResolver가 생성할 때 WebDataBinder에 의해 검증작업을 처리하기 때문에
+
+인자 앞에 다른 커스터마이징 어노테이션으로 검증작업을 수행하게 하려면
+
+WebDataBinder가 @Valid와 @Validated말고 다른 어노테이션도 인지할 수 있게 하고, 
+
+따로 그에 대한 로직 수행을 할 수 있게 뭔가를 해야할 것 같은데, 말로만 들어도 복잡하고 애초에 지원하는 지 조차 모르겠다.
+
+
+쉽게 말해서 Cross-parameter Constraint @Validated에서는 인자 앞에 @NotNull, @Min 이런거 못 붙이듯이,
+
+우리가 커스터마이징한 어노테이션도 붙을 수 없다는 것이고, 
+
+이 말은 클레스 레벨의 @Validated에서 Cross-parameter Constraint @Validated를 사용한 것처럼만 동작 가능하다는 것이다.
+
+
+이러한 특징 때문에 Cross-parameter Constraint @Validated의 경우 그 객체 내부에 있는 필드에 대해서만 검증이 가능하다고 생각하면 된다.
+
+그러므로 커스터마이징 어노테이션을 통해서 검증을 하고 싶으면 그냥 클래스 레벨에 @Valdiated를 사용하고
+
+커스터마이징 어노테이션을 만든 다음 ConstraintValidator를 생성하고 지정해서 사용하는게 좋을 것 같다.
+
+
+
+아, 참고로 Cross-parameter Constraint로 @Valdiated와 AOP @Valdiated의 큰 차이점중 하나는 역시 예외인데,
+
+Cross-parameter Constraint로 @Valdiated를 사용할 때에 인자로 BindingResult를 함께 받으면
+
+WebDataBinder에서 발생하는 예외는 전부 BindingResult에 담고 정상흐름 처리해서 Controller를 호출하는데,
+
+AOP @Vadliated는 그딴 거 없고 검증 실패하면 무조건 예외 날림
+
+
+
+그럼 클래스 단위에 사용되는 @Validated에 대해 조금 알아 보자.
+
+@Validated의 정확한 내용은 조금 복잡하고 어렵기 때문에 모두 설명할 수는 없고 자세한 건 검색해 보자
+
+# https://www.baeldung.com/javax-validation-method-constraints 이런 곳 참조
+
+
+
+
+
+ 
+ㅡㅡㅡㅡㅡㅡㅡㅡㅡ인프런에 내가 글린 글 아까워서 여기 씀ㅋㅋㅡㅡㅡㅡㅡㅡㅡㅡㅡ
+
+클래스 레벨에 사용되면 해당 클래스 객체에는 Spring의 AOP가 적용되고
+
+메소드 레벨은 AOP가 적용된 객체의 검증 그룹핑 기능에 사용되는 듯 하고,
+
+cross-parmeter constraint으로 사용될 경우는 AOP는 적용되지 않고
+
+그냥 @Valid에 그룹핑 기능이 추가된 어노테이션으로 동작하는 것 같더라구요.
+
+ 
+
+Controller에서 클래스 레벨에 @Validated를 사용하고 cross-parmeter constraint로 @Valid를 사용할 경우
+
+실제로 검증이 두 번 일어나는 걸 확인했습니다.
+
+( 클래스 레벨에 @Validated사용 후 cross-parmeter constraint로 @Validated사용 시 AOP의 검증은 일어나지 않음.
+
+클래스 레벨에 @Validated를 사용할 경우 cross-parmeter constraint로 지원되는 어노테이션 중 @Validated는 없는 듯 해요. )
+
+ArgumentResolver가 핸들러 메소드를 호출하기 위한 인자를 생성하는 과정에서 한 번,
+
+AOP가 적용되어 한 번 이렇게 일어나는 것 같아요.
+
+
+클래스 레벨에 @Validated를 사용해서 AOP가 적용되는 것은, Controller에서 일어나는 검증 과정과는 별개로 Bean으로 등록되는 객체에 검증 기능을 사용할 수 있도록 Spring진영에서 제공하는 검증 기술의 하나라고 생각하면 뭔가 맞는 느낌인 것 같아요.
+
+이 때, 하필 둘 다 cross-parmeter constraint로 @Valid를 지원하기 때문에 검증이 두 번 일어나는 것 같았어요.
+
+그래서 혹시나 Controller에서 Spring 제공의 AOP기반 검증 기술을 함께 사용하는 경우 불필요한 곳에서 검증이 두 번 일어날 수도 있을 것 같다는 생각이 들었어요. 이게 Controller에서 일어나는 검증 과정에서는 BindingResult를 사용하면 검증에 문제가 발생해도 BindingResult에 에러를 담고 정상흐름 처리가 되는 것 같은데, AOP기반의 검증 기술은 검증에 실패하면 예외를 터트려버려서 문제가 생길 수도 있을 것 같더라구요.
+
+이런 경우에는 cross-parmeter constraint로 @Valid대신 @Validated를 사용하면, AOP 검증은 피하고 ArguemtnResolver에서 일어나는 검증 과정만 수행하도록 할 수 있을 것 같아요.

@@ -1,0 +1,255 @@
+
+
+
+
+4. Iterator
+
+iterator는 '반복자'라고 한다. 또 Iterator는 인터페이스이다.
+
+Collection 인터페이스에서 제공하는 iterator() 함수를 사용하면 객체는 Iterator를 상속받은
+
+Iterator<> 데이터 타입의 객체를 반환 받는다. 그 객체는 iterator의 메소드를 사용할 수 있게 된다.
+
+Iterator<>의 Generic에 들어가는 데이터 타입은 Iterator의 메소드 중 next()라는 함수의 generic으로 사용된다.
+
+next() 함수는 객체 안에 있는 다음 요소를 하나 출력하는 함수이다.
+
+집합체를 다룰 때는 개별적인 클래스에 대해 데이터를 읽는 방법을 알아야 하기 때문에 각 컬렉션에 접근이 힘들어진다.
+
+iterator를 쓰게 되면 어떤 컬랙션이라도 동일한 방식으로 접근이 가능하여 그 안에 있는 항목들에 접근할 수 있는 방법을 제공한다.(다형성)
+
+쉽게 말하면 List나 Set, Map 마다 서로 특성이 다르기 때문에 그에 맞는 방식으로 요소에 접근방식을 알아야 하는데
+
+iterator를 사용하면 통일된 방법을 이용할 수 있다는 것이다.
+
+특히 iterator 메소드중 remove()가 있어서 요소를 제거하기에 아주 용의하다.
+
+
+iterator함수에 의해 반환된 iterator 객체는 아마 자신이 읽어들인 객체의 요소를 Enum처럼 저장하는 듯 싶다.
+
+왜냐하면 자신이 읽어들인 시점의 객체의 모습을 유지하기 때문이다.
+
+만약 iterator가 Set을 읽어들인다면 계속 그 안의 요소들은 순서가 바뀌어야 할 텐데 그렇지 않는 것 같다.
+
+그리고 java에서도 Enum을 대체하는 CollectionFramework의 요소라고도 했다.
+
+아마 자신이 읽어들인 시점의 객체의 인덱스 순서와 모습을 그대로 Enum처럼 저장하여 갖는 듯 하다.
+
+그리고 next() 함수는 인덱스 0부터 시작해 값을 읽어오는 함수인 것으로 생각된다.
+
+next() 함수는 동작하면서 자신의 인덱스를 증가시킨다. 그래서 중간에 함수를 끊었다가 다시 next()를 진행해도
+
+도중에 끊긴 시점 부터 다시 시작한다. 한 마디로 리셋이 안 된다는 것이다.
+
+리셋을 하기 위해서는 새로운 iterator객체를 만들어 주어야 한다.
+
+
+위의 특징으로 보아 아마  자신이 읽어들인 시점의 객체의 인덱스 순서와 모습을 그대로 저장하여 갖는다는 말이 유력해 보인다.
+
+
+하여튼 이제는 iterator를 사용해 보겠다.
+
+
+public static void main(String[] args) {
+        HashMap<String, Integer> a = new HashMap<String, Integer>();
+        a.put("one", 1);
+        a.put("two", 2);
+        a.put("three", 3);
+        a.put("four", 4);
+
+         
+        iteratorUsingIterator(a);
+    }
+     
+
+     
+    static void iteratorUsingIterator(HashMap<String, Integer> map){
+
+        Set<Map.Entry<String, Integer>> entries = map.entrySet();
+
+        Iterator<Map.Entry<String, Integer>> i = entries.iterator();
+
+        while(i.hasnext()){
+            System.out.println(i.next());
+        }
+}
+ 
+
+위의 코드는 key와 value값을 갖는 데이터를 저장하는 HashMap타입의 객체 a를 만들고 그 안에 값을 넣었다.
+
+그리고 그 객체 a를 iteratorUsingIterator함수에 전달하고 key와 value를 map.entrySet을 통해 출력한다.
+
+출력한 Set 객체는 entries에 저장되고 밑에서 iterator() 함수를 통해 entries의 Iterator 객체를 생성
+
+그렇게 생성된 Iterator 객체에는 Set안에 a의 key와 value의 값이 각자 연관되어 저장된 모습을 담았을 것이다.
+
+while()안에 i.hasnext()를 통해 읽어들일 수 있는 요소가 있는 지 boolean으로 반환하고 true라면 반복.
+
+# i.hasnext 도 i.next처럼 요소가 있는 지 확인하고 다음 요소를 읽기 위해 인덱스를 높이도록 설계됐을 것으로 예상
+
+그리고 i.next를 통해 요소를 계속 읽어들인다. 그 값을 print문에 의해 출력될 것이다.
+
+
+이런 식으로 사용될 수 있다. 조금 더 응용하자면 i.next()에서 반환한 값에 if문을 사용해
+
+만약 값이 ~~라면 remove()함수를 사용해 지우는 것도 가능하다.
+
+참고로 여기서 remove() 함수는 iterator의 원본, 즉 iterator가 순회하는 실제 객체의 요소를 삭제한다.
+
+이것처럼 iterator는 실제 객체의 요소의 값에 영향을 주는 메소드들이 있다.
+
+예를 들면 위의 remove()나 ListIterator의 next(),set() 등등이 있다.
+
+한 마디로 iterator는 객체에 접근이 어려운 컨테이너들에게 공통된 접근방식을 제공하고
+
+접근한 요소들을 메소드를 통해 실제 객체에 영향을 줄 수 있다.
+
+#밑에서 정렬 공부할 때 도움 됨.
+
+
+iterator의 기본적인 내용에 대해 알아 보았다. 심화 내용은 공부하면서 알아 보도록 하자.
+
+
+
+
+5. 정렬
+
+
+컬렉션스 프레임워크를 통해 객체를 담는 컨테이너를 만들었는데
+
+그 안의 객체들을 일정한 기준에 맞추어 정렬하고 싶을 때 사용할 수 있는 방법이 뭐가 있을까.
+
+Collections(Collection 아님) 클래스와 comparable 인터페이스를 사용하는 것이다.
+
+comparable이라는 말을 보면 알겠지만 정확히는 정렬을 하기 위해 사용하는 것 뿐이지.
+
+comparable의 정확한 기능은 '객체의 비교'를 가능하게 하는 것이다.
+
+일반적으로 객체는 비교가 불가능한데 comparable인터페이스를 통해 비교의 기준점을 사용자가 지정하는 것이다.
+
+comparable과 비슷한 comparator라는 인터페이스도 있는데 이 둘의 차이점은
+
+Comparable은 "자기 자신과 매개변수 객체를 비교"하는 것이고, Comparator는 "두 매개변수 객체를 비교"한다는 것이다.
+
+그래서 comparable은 매개변수를 하나만 갖고 comparator는 매개변수를 두 개 갖는다.
+
+또 다른 차이점이라면 Comparable은 lang패키지에 있기 때문에 import 를 해줄 필요가 없지만, Comparator는 util패키지에 있다.
+
+
+
+Collections.sort() 함수를 이용해서 정렬할 수 있다.
+
+# java 8 부터는 List는 자체적으로 sort기능이 생겼다. 바로 리스트 객체.sort(comparator or null) 형식으로 사용 가능
+
+Collections.sort() 함수는 comparable을 implements한 객체들을 갖는 객체에만 사용할 수 있다.
+
+일반적으로 comparbale을 상속하면 compareTo라는 메소드를 재정의 하도록 강제되는데
+
+이 때 compareTo에 재정의한 메소드가 반환 하는 값이 비교의 기준이 되는 것이다.
+
+compareTo의 반환 데이터 타입은 int 이다. 그 이유는 대소 비교를 원칙으로 하기 때문인데,
+
+비교하려는 대상과 자신을 비교했을 때 양수가 나오면 자신이 더 큰 것, 0이 나오면 같은 것, 음수가 나오면 작은 것으로 간주한다.
+
+이렇게 return 된 음수,0,양수를 이용해 대소관계를 확인하고 큰 값 부터 작은값 까지 정렬해 준다.
+
+# 역으로 작은 값부터 큰 값까지 할 수도 있는데 return 값을 반대로 지정해 주는 것이다. 크면 음수 작으면 양수.
+
+# 또는 Collection.reverseOrder() 함수를 이용하는 것이다. 자세한 건 밑에서.
+
+자바에서 기본적으로 comparable을 implements한 객체들도 있는데 예로 String를 들 수 있다.
+
+기본 데이터 타입이나 이런 comparble한 객체들은 sort함수를 이용하여 정렬이 지원된다.
+
+String처럼 우리가 만든 collection 객체 안에 담긴 객체들을 comparable 하게 만드는 과정이 
+
+comparable을 상속하고 compareTo를 재정의 하는 것이라고 볼 수 있다.
+
+
+
+comparator와 comparable 인터페이스 모두 객체를 비교 가능하게 사용자가 정의할 수 있다는 점에서는 같다.
+
+하지만 성격이 살짝 다른데 comparable은 마치 베이스 같은 성향이고 comparator는 조금 추가적인 성향이 있다.
+
+comparator '터'가 들어간 것만 봐도 뭔가 해 주는 녀석이라는 느낌이 든다. 둘을 사용하는 메소드들을 보면 이해가 갈 것이다.
+
+comparable을 상속 받은 객체의 정렬을 사용할 때에는 객체만 넘기면 그 객체에 정의된 
+
+comparable의 compareTo를 자동으로 호출해서 정렬을 한다.
+
+하지만 comparator를 상속 받은 객체의 정렬을 사용할 때에는 그 comparator 객체도 함께 넘겨야 한다.
+
+자기 자신에게 comparator를 상속시켰다면 자기 자신을 넘기면 되고 만약 다른 comparator를 만들고 그 안에
+
+특정 객체안의 요소를 비교할 수 있도록 정의해 놓은 compare메소드가 있다면 그 것을 불러도 된다.
+
+Collections.sort()를 예시로 들면 Collections.sort는 우리가 만든 collection 객체 안의 요소들을 정렬해 주는 함수이다.
+
+그래서 collection 객체 안의 요소 오브젝트들이 comparable을 상속 받아 compareTo가 정의된 경우에만 사용이 가능하다.
+
+우리는 comparable을 상속 받은 객체를 요소로 갖는 컨테이너 객체를 인자로 넘겨주기만 하면 된다.
+
+그럼 요소들의 클래스에 정의된 compareTo를 호출하고(실제로는 더 복잡함)하고 알아서 정렬을 해줄 것이다.
+
+이 때 comparable을 상속받지 않는 요소들을 비교하는 방법이 있다. 바로 요소들과 함께 comparator를 넘기는 것이다.
+
+여기서 comparator의 이름이 왜 '터'인 지 알 것이다. 다른 요소의 비교를 도울 수 있게 따로 정의해 두고 사용할 수 있는 것이다.
+
+우리는 comparable을 상속 받지 않는 객체를 요소로 갖는 컨테이너 객체를 인자로 보내고 뒤에 comparator 객체를 함께 넘겨 준다.
+
+그러면 sort() 메소드는 comparator 객체에 재정의된 compare 메소드를 호출해 그것을 이용해서 정렬을 하는 것이다.
+
+만약 요소들이 comparable이 아닌 comparator를 상속 받는다면 요소의 객체를 넘겨 주면 되고 
+
+comparator를 따로 만들어 저장해 두었다면 그 것의 인스턴스를 만들어 넘기면 된다.
+
+# comparator 객체를 인자로 넘겨야 하기 때문에 객체를 하나 만들 수 밖에 없다.
+
+# 익명 객체(클래스)를 활용하는 방법이 있다고 하는데 밑에서 배워 보자.
+
+
+
+이러한 장점 덕분에 comparator는 comparable에 정의된 비교 방법 외에 다른 비교 방식을 만들고 싶을 때
+
+comparator를 사용해 비교 방법을 정의한 객체를 만들 수 있는 것이다. 
+
+대부분(아마 전부일 듯?) 정렬 메소드들은 컨테이너 객체와 comparator를 인자로 함께 받아 객체의 비교 방식을
+
+comparator에 정의된 방법을 따르는 메소드. 즉, comparable을 받는 메소드의 오버로딩 버전이 있다.
+
+# 오버로딩이라고 봐야할까 그냥 다른 메소드라고 봐야 할까. 속성이 비슷하니 오버로딩이라고 생각한다. 인자만 다르고 구동방식은 비슷하니까.
+
+우리는 원하는 방식에 따라 원하는 메소드를 호출하여 사용하면 되는 것이다.
+
+
+위에서 익명 객체를 활용하는 방법이 있다고 했는데 가볍게 알아 보고 넘어가자.
+
+익명 객체는 원하는 클래스나 인터페이스 등등을 상속 받는 객체를 하나 만들어 내는 것이다.
+
+하지만 그런 객체를 만들기 위한 클래스의 구현 없이 바로 객체로 만들어 내는 것이다.
+
+방법은 간단하다 상속 받기를 원하는 클래스나 인터페이스의 객체를 생성하고 그 객체의 뒤에 새로 정의할 내용들을 추가하면 된다.
+
+위의 comparator의 익명 객체를 한 번 만들어 보자.
+
+
+Comparator<String> comp1 = new Comparator<String>(){
+    public int compare(<String> a, <String> b){
+        return a.length - b.length;
+    }
+};
+
+
+Comparator 인터페이스를 상속 받는 comp1 익명 객체를 만들었다.
+
+comp1라는 객체는 comparator의 비교 메소드인 compare()를 문자의 길이값을 서로 빼서 반환하도록 오버라이딩 되었다.
+
+특별한 클래스의 구현 없이 바로 객체를 생성하면서 오버라이딩을 해준 것이다.
+
+이런 식으로 익명 객체를 만들어서 Comparator를 인자로 필요로 하는 메소드에 전해 주면 되는 것이다.
+
+위에서 역으로 문자열을 정렬할 때에 컨테이너 객체 다음 Collection.reverseOrder()를 넘겨 주는 것도
+
+Collections.reverseOrder() 메소드가 반환하는 객체가 역으로 정렬하는 메소드를 가진 comparator 데이터 타입인 객체이기 때문이다.
+
+

@@ -1,0 +1,55 @@
+
+
+
+
+
+Form태그 내의 인자들을 바탕으로 bindingError를 통해서 여러 에러들을 제어할 수 있다.
+
+이 때 타임리프에서는 이렇게 생성된 에러를 넘겨받아 사용할 수 있는데, 주의할 점이 하나 있다.
+
+그것은 각 에러들이 타임리프에서 제공하는 속성들과 매핑되기 때문에 th:object와 함께 쓰여야 한다는 것이다.
+
+그래서 일반적으로 form 태그 내에서 form태그에 th:object를 작성한 뒤 사용한다.
+
+하지만 무조건 form태그에서만 사용해야 하는 것은 아니고 th:object를 꼭 해야만 하는 것도 아니다.
+
+말 그대로 각 에러는 에러가 등록될 때 지정된 특정 필드와 매핑되기 때문에 
+
+타임리프의 에러태그에서 필드를 명시하는 경우는 외부에 또는 th:object 없이 사용이 가능하다.
+
+<div th:errors="${myForm}">...</div>
+<div th:errors="${myForm.date}">...</div>
+<div th:errors="${myForm.*}">...</div>
+
+<div th:if="${#fields.hasErrors('${myForm}')}">...</div>
+<div th:if="${#fields.hasErrors('${myForm.date}')}">...</div>
+<div th:if="${#fields.hasErrors('${myForm.*}')}">...</div>
+
+이런 식으로 특정 필드를 직접 지정하는 경우는 사용이 가능하다.
+
+
+
+<ul th:if="${#fields.hasErrors('global')}">
+  <li th:each="err : ${#fields.errors('global')}" th:text="${err}">Input is incorrect</li>
+</ul>
+
+<p th:if="${#fields.hasErrors('all')}" th:errors="*{all}">Incorrect date</p>
+
+<ul>
+  <li th:each="err : ${#fields.errors('*')}" th:text="${err}" />
+</ul>
+
+위처럼 form 태그 안에서 th:object를 사용했기 때문에 사용 가능한 특정 ${}없이 사용하는 변수명이나,'all',* 등은
+
+form태그 외부에서 사용될 수 없다.
+
+
+<div th:if="${#fields.hasGlobalErrors()}">
+  <p th:each="err : ${#fields.globalErrors()}" th:text="${err}">...</p>
+</div>
+
+또, 위처럼 글로벌 에러의 경우는 특정 필드에 매핑되는 것이 아니라서 특정 필드를 명시할 수 없다.
+
+그래서 form태그 외부에서 사용될 수 없다.
+
+

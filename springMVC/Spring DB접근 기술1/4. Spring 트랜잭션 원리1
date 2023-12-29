@@ -1,0 +1,260 @@
+
+
+
+
+
+
+스프링 부트는 기본적으로 jdbc 라이브러리를 확인하고 그에 맞는 Driver를 자동으로 DriverManager에 등록한다.
+
+그래서 따로 드라이버를 등록할 필요 없이 DriverManager를 통해 바로 커넥션을 얻을 수 있다.
+
+하지만 보통 커넥션 풀을 많이 사용하기 때문에 DataSource를 많이 사용할 것이다.
+
+Spring은 DataSource역시 자동으로 등록해 준다. 
+
+# 참고로 HikariDataSource를 기본으로 등록해 준다.
+
+어떤 DataSource는 자동으로 DriverManager에 등록된 Driver로부터 커넥션을 얻기도 할 것이다.
+
+(HikariDataSource는 어떤 지 잘 모르겠다. DriverManager를 사용할 것 같지는 않다.)
+
+당연히 기본으로 생성해 주기는 하지만 생성을 위한 설정 내용을 우리가 직접 적어야 하기 때문에
+
+properties 파일에 datsource의 db url과 id, pw 내용을 적어야만 제대로 커넥션풀이 생성된다.
+
+
+
+하여튼 우리는 지금 트랜잭션 처리를 어떻게 하는 지에 대해 다루고 있다.
+
+우리가 서블릿에서 트랜잭션 처리를 하고 싶으면 전에도 말했지만 하나의 커넥션을 공유해서 사용해야 한다.
+
+Connection을 모두가 공유할 수 있도록 인자로 넘겨야 하고..
+
+Connection을 닫는 로직도 모든 트랜잭션이 끝난 이후에 적어 주어야 하고..
+
+# 잘못해서 트랜잭션이 모두 끝난 이후가 아니고 그 전에 로직 어딘가에서 습관적으로 닫는 경우가 있을 수 있음
+
+그리고 커넥션 풀을 사용한다면 close를 했을 때 커넥션이 닫히는 게 아니고 반납이 된다는 것이다.
+
+그러면 처음에 set autoCommit을 false로 지정했다가 반납하기 전에 true로 다시 바꿔 주지 않으면
+
+다음 그 커넥션을 사용하는 쪽에서 문제가 발생할 수 있게 되기 때문에 이런 로직도 따로 짜주어야 한다.
+
+# 보통 autoCommit은 true를 디폴트라고 가정하고 사용하기 때문.
+
+신경써야할 것이 한 두개가 아니고 로직도 길어서 보기 안 좋고 복잡하다.
+
+
+
+그래서 이러한 단점을 보완하고자 Connection의 동기화 과정을 통일하여 제공해 주기 위해 Spring은 좋은 방법을 제공했다.
+
+바로 Connection 생성 과정을 단순히 DataSource로부터 받는 것이 아니고 그 DataSource를 이용하는 
+
+TransactionManager라는 것을 만들어서 사용하는 것이다.
+
+
+이 TransactionManager의 원리는 심플하다.
+
+일단 어플리케이션에서 사용하는 DataSource 객체를 받아 설정하고 그 객체로부터 Connection을 얻는다.
+
+단순히 얻어서 제공하기만 하면 크게 의미가 없다. 
+
+여기서 TransactionManager의 역할은 그 객체의 autoCommit을 false로 설정하고 TransactionSynchronizationManager에 등록한다.
+
+이 TransactionSynchronizationManager는 ThreadLocal을 통해 구현되었는데, 이는 각 스레드마다 각각의 저장소를 부여 받도록 할 수 있다.
+
+따라서 모든 요청 마다 TransactionManager를 통해 getTransaction() 메소드를 호출하면
+
+각 스레드에 배정되는 저장소에 Connection이 autoCommit false로 설정되어 저장되는 것이다.
+
+그러면 로직에서 쿼리 수행 로직이 수행될 때 TransactionSynchronizationManager에 있는 Connection을 가져다 사용하면 
+
+모두 TransactionManager에 저장된 하나의 Connection을 통해 로직이 수행되므로 같은 Connection을 사용하는 효과를 갖는다.
+
+
+이 때 TransactionSynchronizationManager로부터 Connection을 얻을 때에는 
+
+TransactionSynchronizationManager에서 바로 얻어 사용해도 되지만 
+
+예외처리도 함께 제공하는 DataSourceUtils 객체의 getConnection() 메소드를 사용해서 얻는다.
+
+# 실제 TransactionSynchronizationManager의 doGetResource() 메소드를 호출하고 예외 처리로직만 추가된 메소드임
+
+메소드 이름도 getConnection()이 좀 더 커넥션을 얻는 것 같아서 보기도 좋고 예외처리 로직도 가려지니 이거 쓰는 게 좋다.
+
+하여튼 그래서 DataSourceUtils를 통해 우리는 TransactionSynchronizationManager에 저장된 Connection을 가져올 수 있고,
+
+이렇게 가져온 Connection은 같은 스레드라면 같은 Connection이라는 것이다.
+
+
+그럼 만약 트랜잭션 처리가 필요 없을 때에는 어떻게 해야 할까.
+
+TransactionManager를 사용하지 않고 그냥 처리를 하면 될까?
+
+그렇게 되면 Connection을 얻어오는 과정이 결국은 또 통일성이 떨어진다.
+
+TransactionManager를 사용하면서 조금 편리해지고 가독성도 좋아진 것 같지만 
+
+트랜잭션 처리가 필요한 로직과 필요 없는 로직이 Connection을 가져오는 방식이 다르다면 무슨 의미가 있겠는가.
+
+그래서 우리는 그냥 DataSourceUtils의 getConnection()으로 통일해서 사용하면 된다.
+
+만약 트랜잭션 처리가 필요 없는 로직이라서 로직 내에 TransactionManager의 getTransaction() 메소드 호출이 없었다면,
+
+TransactionSynchronizationManager에도 Connection이 담겨 있지 않을 것이다.
+
+그런 경우에는 알아서 새로운 Connection을 반환해 주도록 설계되어 있으니 걱정말고 사용하면 된다.
+
+그렇게 반환된 Connection은 아무래도 TransactionManager에 의해 설정을 거친 Connection은 아니기 때문에
+
+우리가 그냥 DataSource를 통해 Connection을 받아오는 것과 같다고 생각하면 된다.
+
+
+주의할 점은 우리가 TransactionSynchronizationManager에 저장된 Connection을 얻어서 사용하는 만큼
+
+트랜잭션이 모두 끝날 때 까지는 계속 TransactionSynchronizationManager에 Connection을 사용하고 반환해야 한다는 것이다.
+
+이 때 단순히 JdbcUtils를 통해서 close를 하거나, 일반 Connection.close를 사용해 버리면 
+
+말 그대로 그냥 db와 연결된 Connection의 연결을 완전히 끊고 폐기하는 것과 같기 때문에 
+
+(커넥션 풀을 사용할 경우에는 프록시에 감싸져서 사용되기 때문에 close시 커넥션 풀로 돌아가게됨.)
+
+그냥 close 대신 DataSourceUtils에서 제공하는 releaseConnection()을 사용해야 한다.
+
+
+releaseConnection()을 사용하면 두 가지 기능을 제공한다.
+
+해당 Connection이 TransactionSynchronizationManager로부터 갖고 온 Connection이라면 닫지 않고 유지를 하고
+
+TransactionSynchronizationManager로부터 갖고온 Connection이 아니라면 바로 close 해 버린다.
+
+# 여기도 당연하지만 커넥션 풀 사용 시 close는 커넥션 풀로 반환
+
+
+이런 두 가지 기능을 제공하면 좋은 점이 우리가 TransactionSynchronizationManager로부터 가져온 Connection은
+
+모든 수행을 마치고 마지막에 커밋이 되거나 롤백이 되기 전까지 우리가 직접 닫을 이유가 없다. 
+
+근데 우리는 여러 단일 로직을 합쳐서 트랜잭션을 수행하기도 한다. 
+
+근데 그 로직들을 하나씩 보면 트랜잭션이 이루어져야 하는 로직들이 아니고 일반 쿼리를 수행하는 로직인데, 그걸 우리가 묶은 것이다.
+
+즉, 그 로직들은 꼭 트랜잭션이 아니더라도 다른 곳에서 많이 사용될 수 있는 로직이라는 것이다.
+
+그렇게 되면 단일로 사용될 때를 위해서 close로직이 함께 포함되어야 하는데, 이게 영향을 받아서
+
+트랜잭션에서도 close가 되어버리면 트랜잭션이 수행되기 전에 Connection이 끊길 수 있다.
+
+그래서 releaseConnection()을 이용하면 트랜잭션이 수행 중인 커넥션이라면 close를 하지 않도록 해 주는 것이다.
+
+트랜잭션의 여부를 확인하는 게 TransactionSynchronizationManager로부터 가져온 Connection인 지 아닌 지를 보는 것이고 ㅇㅇ
+
+
+근데 releaseConnection()에서 close를 못하면 커넥션을 닫는 걸 어떻게 하지? 
+
+그걸 TransactionManager가 commit()과 rollback()메소드에서 수행한다.
+
+트랜잭션이 끝나서 commit()이 호출 되거나 오류 발생으로 rollback()이 호출되었을 때 자동으로 연결을 끊어 준다는 것이다.
+
+원래라면 finally를 통해서 commit을 마치고, 또는 오류 발생이 난 후 각각 Connection이 닫힐 수 있도록 따로 로직을 넣어야 했지만
+
+TransactionManager를 사용할 경우에는 commit, rollback이 발생하면 알아서 Connection을 닫아버린다.
+
+그럼 풀을 사용하지 않는 경우는 TransactionSynchronizationManager에 있던 Connection을 지우고 Connection 객체를 완전히 close한다.
+
+커넥션 풀을 사용할 경우에는 커넥션 객체의 autoCommit를 다시 true로 설정해서 커넥션 풀에 돌려놓는다.
+
+
+쉽게 생각해서 TransactionManager를 사용하면 commit이나 rollback이 일어나면 
+
+알아서 DataSourceUtils.releaseConnection()을 호출해 주기 때문에 커넥션을 닫는 로직을 따로 finally에 적을 필요가 없다는 것이다.
+
+오히려 이런 상황에서 finally에 releaseConnection()을 또 사용해 버리면 release를 두 번 호출하는 형태가 되어 버린다.
+
+이렇게 되면 풀을 사용하지 않을 때에는 괜찮은데 풀을 사용할 경우 문제가 발생할 수 있다. 
+
+
+commit이나 rollback이 일어났을 때 알아서 releaseConnection()이 일어나기 때문에 connection 객체가 풀에 다시 반환되었을 텐데,
+
+이 상태에서 finally에 작성된 로직때문에 releaseConnection() 메소드가 또 호출되는 것이다.
+
+그럼 해당 커넥션 객체는 첫 번째 release에서 TransactionSynchronizationManager로부터 받은 객체로 판정되어 이미 풀에 반환된 객체인데,
+
+그 커넥션 객체에 대해 release를 또 호출해 버리면 release메소드는 해당 객체를 
+
+TransactionSynchronizationManager에서 가져온 커넥션 객체로 보지 않는 것이다. 
+
+(이제는 동기화 매니저가 아닌 풀에 있는 객체를 그대로 가리키고 있기 때문)
+
+그럼 위에서 말한 동작 메커니즘에 따라 커넥션 풀에 돌려놓아야 하는 커넥션 객체가 아닌, 
+
+바로 호출하고 바로 close하는 커넥션 객체인 줄 알고 커넥션을 close해버리는 형태가 된다.
+
+그럼 커넥션 풀에는 커넥션이 닫힌 커넥션 객체가 연결만 끊긴 채 그대로 보관되게 되는 것이다.
+
+(커넥션이 끊기는 것이지, 객체가 사라지는 게 아니기 때문에 커넥션 풀 입장에서는 커넥션 객체는 계속 유지하기 때문)
+
+
+그럼 다른 곳에서 해당 커넥션 객체를 받아서 사용할 때, 커넥션이 끊겨 있는 상태이기 때문에
+
+Connection is closed 라는 에러가 발생하게 된다.
+
+이게 동시적으로 많은 요청이 오는 상황이면 새로 요청할 때 마다 다른 커넥션 객체를 사용하게 될 수도 있어서
+
+여러번 요청하면 제대로 동작하게 되는 경우의 수가 더 많기는 하지만, 그래도 매우 심각한 문제이다.
+
+오히려 왜 이게 언제는 되고 언제는 안 되는 지 로직상으로는 문제가 없는데 커넥션만 끊기고 커넥션 풀만 차지하는 미친 상황이 된다.
+
+반대로 현재 나처럼 혼자 공부하는 경우에는 동시에 뭔가 요청하는 경우가 없는데, 
+
+하나의 커넥션이 끝나고 풀에 반환되었다가 또 새로운 트랜잭션이 시작되어 커넥션을 얻을 때 반환했던 걸 다시 받는 형태가 된다.
+
+풀에 있는 것 중 랜덤으로 뽑는 게 아니라 앞에 빈 것 부터 차례대로 주기 때문에, 
+
+동시성이 없는 공부용으로 서버를 경우는 늘 사용하던 게 반환되기 때문에 그냥 계속 Connection is closed 라는 에러가 발생하게 된다.
+
+그러니 이런 문제점을 인지하고 조심해서 사용하도록 하자.
+
+TransactionManager를 사용하면 connection은 닫지 않아도 된다!!!!!
+
+
+
+
+
+위가 Spring에서 제공하는 트랜잭션기술을 이용한 트랜잭션 처리의 전반적인 과정이다.
+
+하지만 아직도 끝나지 않은 문제가 있다.
+
+우리가 TransactionManager를 통해 Connection을 얻고 비즈니스 로직을 호출해서 사용해도,
+
+결국 그 결과가 잘 시행되면 commit, 예외 발생 시 rollback을 하는 로직을 작성하는 반복도 남아 있다.
+
+그래서 우리는 이 반복 과정을 조금 간편하게 도와 주는 트랜잭션 템플릿을 사용할 수 있다.
+
+템플릿은 말 그대로 우리가 함수형 인터페이스에 비즈니스 로직을 담아서 넣으면 
+
+이러한 TransactionManager를 호출해서 커넥션을 얻고 commit과 rollback과정 사이에 
+
+우리가 넘긴 로직을 껴서 처리해 주는 편리 기능이라고 생각하면 된다.
+
+# 템플릿이 예외처리를 해줄 때 rollback()호출 후 RuntimeException이 아니고 checkedException을 던지기 때문에 이 부분은 직접 처리해야 함
+
+사용법은 어렵지 않으니 굳이 여기에 적지 않겠다. 따로 필요하면 찾아서 사용해 보자.
+
+
+# 김영한님 강의 봐도 됨 -> DB접근 1 후반쯤 있음
+
+
+
+
+
+
+
+
+
+
+
+
+
+

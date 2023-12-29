@@ -1,0 +1,105 @@
+
+
+
+
+
+1. SYSDATE, CURRENT_DATE, SYSTIMESTAMP, CURRENT_TIMESTAMP
+
+현재 시간을 얻는 함수들
+
+
+SYSDATE는 시분초 까지 SYSTIMESTAMP는 밀리초까지 반환
+
+CURRENT_DATE,CURRENT_TIMESTAMP는 위의 두 개와 달리 접속자의 컴퓨터에서 지정하는 현재시간을 반환
+
+SYSDATE와 SYSTIMESTAMP는 오라클이 설치되어 있는 그 서버(컴퓨터)의 국가 시간으로 반환
+
+
+CURRENT_DATE,CURRENT_TIMESTAMP의 지정하는 시간을 바꾸는 방법은 
+
+ALTER SESSION SET TIME_ZONE = ''이다.
+
+각 나라의 시간은 그리니치 천문대를 기준으로 각 지역에서의 시간차로 구하는데
+
+이것이 그 그리니치 천문대로부터의 시간차를 지정하는 것이다.
+
+즉, SYSDATE와 SYSTIMESTAMP의 경우는 오라클이 설치되어 있는 컴퓨터의 나라에 따라 자동으로 설정된 시간차를 이용해 날짜,시간을 구하고
+
+CURRENT_DATE,CURRENT_TIMESTAMP는 우리가 ALTER SESSION SET TIME_ZONE = ''에 저장한 시간차를 기준으로 날짜,시간을 구한다.
+
+
+SYSDATE를 사용해서 데이터를 저장해 보면 막상 시분초까지 반환을 안 하는 경우가 있다.
+
+그것은 시간 포맷 설정이 다르게 설정되어 있어서 그런 것인데 
+
+ALTER SESSION SET NLS_DATE_FORMAT = '원하는 날짜 포맷' 을 통해 변경할 수 있다.
+
+
+
+
+2. EXTRACT(구하고자 하는 날짜 FROM 날짜 또는 날짜 데이터)
+
+년,월,일,시,분,초 중 원하는 값을 날짜 데이터로 부터 뽑아내는 것이다.
+
+EX) EXTRACT(MONTH FROM REGDATE) -> REGDATE라는 속성의 날짜 데이터로부터 '월'에 해당하는 값을 추출 
+
+
+
+
+3. ADD_MONTH(날짜, 정수(양수 또는 음수))
+
+날짜에다 정수에 해당하는 월만큼 값을 더함
+
+응용) 가입한지 6개월이 안 된 회원을 구하라
+
+-> SELECT * FROM MEMBERS WHERE ADD_MONTH(SYSDATE, -6) < REGDATE
+
+현재 시간에서 -6개월을 더한 값보다 등록날짜가 더 크면 6개월이 안 된 것으로 볼 수 있다.
+
+
+
+4. MONTHS_BETWEEN(날짜, 날짜)
+
+두 날짜의 차이를 구함. 반환되는 값은 개월 수 기준임
+
+EX) 1.7 -> 1.7개월
+
+
+
+5. NEXT_DAY(현재날짜, 요일)
+
+현재 날짜로부터 다음 요일에 해당하는 값을 구함
+
+EX) NEXT_DAY(SYSDATE, '토') -> 현재 시간으로부터 다음 토요일의 날짜가 언제인 지 구함
+
+요일에는 월 화 수 목 금 토 일 이 올 수 있고 월요일, 화요일 처럼 전부 적어도 된다.
+
+
+
+6. LAST_DAY(날짜)
+
+날짜에서 마지막날을 구하는 함수
+
+
+
+7. ROUND/TRUNC(날짜, 포맷)
+
+날짜를 반올림 하는 함수
+
+입력된 날짜의 포맷에 해당하는 부분까지 나타내도록 반올림하여 반환
+
+EX) ROUND(TO_DATE('2008-02-03'), 'YEAR') -> 2008-01-01 00:00:00
+
+2월은 반올림하면 내림이 일어나기 때문에 2008년 초기날짜가 됨
+
+TRUNC(TO_DATE('2055-07-04), 'CC') -> 2105-01-01 00:00:00
+
+CC는 100년을 기준으로 잡기 때문에 55년을 기준으로 반올림이 일어남.
+
+# 근데 1년 단위는 왜 같이 반올림 안 되고 유지되는 지는 모르겠음
+
+
+포맷 옵션으로는 CC(세기),YEAR(년),Q(분기),MONTH(월),W(주),DAY(일) 등이 올 수 있다.
+
+
+* TO_DATE는 문자열을 날짜로 바꿔 주는 함수이다. 

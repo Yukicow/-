@@ -1,0 +1,50 @@
+
+
+
+
+map()
+
+
+map(f, iterable)은 함수(f)와 반복 가능한(iterable) 자료형을 입력으로 받는다. 
+
+map은 입력받은 자료형의 각 요소를 함수 f가 수행한 결과를 묶어서 돌려주는 함수이다.
+
+
+이게 뭔 소리냐.
+
+반복하는 게 귀찮아서 함수나 for을 쓰죠?
+
+근데 그 반복에 또 반복이 필요하면 어떡할까요.
+
+예 이중 for를 쓰거나 하겠죠. map()은 for랑 비슷한 건데요.
+
+어떤 함수에 대해 뒤에 리스트 같이 반복 가능 자료형에 있는 변수들을
+
+하나씩 대입해서 결과를 돌려주는 함수에요.
+
+
+예시를 보면 이해가 될 거임.
+
+def two_times(numberList):
+    result = []
+    for number in numberList:
+        result.append(number*2)
+    return result
+
+result = two_times([1, 2, 3, 4])
+print(result)
+
+two_times는 입력 받은 값들을 두 배로 바꿔서 돌려주는 함수이다.
+
+근데 이렇게 복잡한 거를 map()을 이용해 쉽게 쓸 수 있다.
+
+def two_times(x): 
+    return x*2
+
+list(map(two_times, [1, 2, 3, 4]))
+
+매개변수 x에 대해 2배 곱한 값을 돌려주는 함수 two_times를 만들고
+
+map()을 이용해 리스트 [1,2,3,4]에 대해 two_times 함수를 수행하도록 만든 것.
+
+기본적으로 map()은 반환한 값을 map() class 저장하기 때문에 위와 같이 type 변경이 필요함.

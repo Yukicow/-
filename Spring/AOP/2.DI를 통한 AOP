@@ -1,0 +1,85 @@
+
+
+
+
+
+
+
+전에 Proxy를 통해 AOP를 구현해 보았는데 이번에는 spring의 DI 기능을 통해 AOP를 구현해 볼 것이다.
+
+이번에 사용하는 Proxy 객체는 조금 다르다.
+
+java에서 제공하는 Proxy가 아니고 spring에서 제공하는 Proxy 객체를 이용할 것이다.
+
+
+org.springframework.aop.framework패키지의 ProxyFactoryBean 객체를 이용할 것이다.
+
+먼저 org.springframework.aop.framework.ProxyFactoryBean 객체를 생성해야 한다.
+
+xml파일에 bean 태그를 사용해 생성하고
+
+이 객체도 java의 porxy와 비슷하게 target에 해당하는 클래스의 객체를 필요로 하는 듯 하다.
+
+그래서 property 태그를 통해 setter 메소드를 이용해서 target 객체를 설정해 줄 것이다.
+
+미리 bean태그를 이용해서 target에 해당하는 클래스의 빈을 생성하고 
+
+<property name="target" ref="target 빈"></property>
+
+property 태그를 통해서 그 빈을 setting해 준다.
+
+
+org.springframework.aop.framework.ProxyFactoryBean객체는 Interceptor를 필요로 한다.
+
+Interceptor는 java proxy의 InvocationHandler와 비슷하다고 생각하면 된다.
+
+MethodInterceptor 인터페이스를 구현하는 클래스를 하나 생성하고 
+
+# 꼭 MethodInterceptor가 아니고 MethodInterceptor interface를 구현하는 거면 다 됨
+
+그 곳에 MethodInterceptor 인터페이스에서 강제하는 invoke 메소드를 오버라이딩 한다.
+
+InvocationHandler처럼 invoke 메소드 안에 오는 내용이 보조로직에 해당하게 된다.
+
+그리고 주요 로직을 함께 넣어야 하는데 java porxy에서는 method.invoke() 메소드를 통해서 불러왔지만
+
+MethodInterceptor에서는 proceed라는 메소드를 통해 호출할 수 있다.
+
+invoke 메소드에서 인자로 받는 MethodInvocation invocation 객체의 proceed() 메소드를 사용하면 
+
+우리가 proxy를 통해 호출하게 될 특정 주요 로직에 해당하는 메소드가 호출된다.
+
+
+그럼 이제 만든 Interceptor 클래스를 Proxy 빈에 설정해 주어야 한다.
+
+bean태그를 통해 Interceptor 클래스의 빈을 미리 생성하고
+
+property 태그를 통해 
+
+<property name="interceptorNames">
+    <list>
+        <value>Interceptor빈</value>
+    </list>
+</property>
+
+
+list 안에 value 태그를 통해 생성한 Interceptor 빈을 넣어 준다.
+
+interceptorNames의 이름처럼 알 수 있게 interceptorNames는 Interceptor 객체들의 이름에 해당하는 String 배열이다.
+
+원래는 이름을 String 배열 형태로 넣어 줘야 하는데 왜 객체를 그대로 넣는 지는 모르겠지만
+
+배열이기 때문에 list 태그 안에 value 형태로 객체를 넣어서 setting한다.
+
+
+이렇게 하면 Proxy 객체의 생성이 완료됐다.
+
+이제 context를 통해 xml 파일로부터 Proxy 객체를 받아서 원하는 메소드를 호출해 보자.
+
+그럼 보조 로직을 포함하는 주요 로직이 실행될 것이다.
+
+이 때 자바를 통해서 AOP를 구현했을 때와 똑같이 context로 받아오는 proxy는 
+
+실제 주요 로직이 있는 클래스가 구현하는 인터페이스로만 타입 캐스팅이 가능하다.
+
+# 추상화를 강제하는 듯 하다..

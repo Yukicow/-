@@ -1,0 +1,30 @@
+
+
+
+
+
+
+
+PRG 패턴을 사용할 때 문제가 되는게 return값으로 넣는 url을 만들기 위해
+
+'+'와 같은 String 연산을 사용하게 된다는 점이다.
+
+이러한 String 연산을 사용하면 인코딩 과정에서 문제가 발생할 수 있기 때문에 좋지 않다.
+
+pathVariable처럼 url의 path를 변수처럼 활용가능하면 좋을텐데, 어떻게 해야 할까
+
+
+이러한 방법을 제공해 주는 것이 RedirectAttributes 객체이다.
+
+이 객체에 addAttribute를 통해 특정 값을 저장하면, pathVariable처럼 return값에 
+
+RedirectAttributes에 저장한 값을 {}를 사용하여 넣을 수 있다.
+
+
+이 때 중요한 것은 addAttribute를 통해 값을 집어 넣은 것 중에 return url에 사용하지 않은 값은
+
+자동으로 쿼리 스트링으로 들어간다는 것이다.
+
+예를 들어 username과 age를 저장했는데 return "redirect:/{username}" 이렇게만 사용하면 age는
+
+응답 url에 age=~~ 로 쿼리 스트링으로 들어간다는 것이다.

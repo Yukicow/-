@@ -1,0 +1,364 @@
+
+
+
+
+
+
+Spring에서는 MVC 패턴을 위한 여러 가지 기능을 제공하는데
+
+Spring에서 제공하는 라이브러리를 통해 MVC패턴을 구현해 보도록 하자.
+
+
+우리가 servlet을 통해 MVC 패턴을 사용할 때에는 Model2의 경우
+
+Servlet 파일로 만들어진 Controller를 통해 사용자가 어플리케이션을 조작하여 발생하는 변경 이벤트들을 처리하는 역할을 수행했다.
+
+그리고 Dispatcher를 통해 forwarding 하는 방식으로 전송한 (기존)데이터를 그대로 유지하며 상호 연결을 담당했다.
+
+그렇기 때문에 Servlet Controller가 Dispatcher를 꼭 구현하고 있는 형태였다.
+
+하지만 Spring에서는 이 둘을 구분하여 구현하도록 Front Controller를 제공한다.
+
+그 녀석이 바로 DispatcherServlet이라는 클래스이다.
+
+
+Controller에 해당하는 기능은 단순 java파일 Plain Old Java Object(POJO)를 통해 구현되고 Dispatcher의 기능을
+
+Front Controller인 DispatcherServlet이 담당하게 된다.
+
+
+이렇게 함으로써 Servlet의 기능을 Front Controller에게 한정시키고 Controller와의 결합력을 낮추는 기능을 제공한다.
+
+DispatcherServlet은 모든 요청을 자신이 처리하게 된다. 그리고 알맞는 컨트롤러에게 그 요청을 배분하는 역할을 한다.
+
+그래서 우리의 역할을 DispatcherServlet에게 모든 요청을 위힘되도록 하고 알맞는 컨트롤러와 매핑될 수 있도록 설정을 해 주는 것이다.
+
+
+일단 중요한 내용들이 있는데 그것들은 먼저 원리를 본 다음에 하나씩 고쳐갈 것이다.
+
+원리에 대해 알아 보고 문제점을 하나씩 고쳐 보자.
+
+
+먼저, DispatcherServlet에게 모든 요청이 가도록 설정할 것이다.
+
+이는 Servlet에서 우리가 url 매핑을 통해 특정 url 요청에 대해 그 Servlet이 담당하도록 했던 것과 같은 원리이다.
+
+그래서 그것과 똑같이 web.xml파일에 DispatcherServlet에 url 요청을 매핑하는 과정이다.
+
+web.xml 파일을 열고 <servlet> 태그를 사용한다.
+
+<servlet>
+    <servlet-name>원하는 이름</servlet-name>
+    <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+</servlet>
+
+위처럼 요청을 담당할 servlet을 태그를 통해 지정한다.
+
+원래는 어노테이션을 통해 간단하게 url 매핑이 가능했으나 그건 Servlet 소스 코드 파일을 우리가 직접 갖는 경우의 얘기다.
+
+지금은 spring에서 제공하는 라이브러리를 사용하는 것이기 때문에 어노테이션 사용이 불가능하다. xml파일로만 된다.
+
+
+servlet을 지정했다면 url 매핑만 해 주면 된다.
+
+<servlet-mapping>
+    <servlet-name>위에 지정한 이름</servlet-name>
+    <url-pattern>/</url-pattern>
+</servlet-mapping>
+
+들어오는 url 요청의 형식을 지정하고 매핑해 준다. 우리는 모든 요청에 대해 DispatcherServlet이 받도록 할 것이기 때문에
+
+url-pattern 으로 '/'을 지정해 주었다.
+
+여기서 url-pattern으로 '/*'을 주면 안 되는 이유가 있다.
+
+그 이유는 뒤에서 알아 보자. 일단 '/'로 지정한다.
+
+
+그럼 다음으로는 Controller를 빈으로 등록하고 DispatcherServlet이 요청을 받았을 때 알맞은 Controller를 찾아 사용하도록 해야 한다.
+
+먼저, Controller를 하나 만들어서 빈으로 등록할 것이다. Controller를 만드는 방벙은 여러 가지가 있지만
+
+우리는 Controller 인터페이스를 구현하는 클래스를 하나 만들 것이다.
+
+이 인터페이스는 handleRequest()라는 메소드를 구현하도록 한다. 
+
+이 메소드는 return 값으로 ModelAndView 객체를 반환하는데 이 ModelAndView객체는
+
+Controller에 의해 Model 단에서 기능을 수행하고 그에 대한 결과로 설정되는 값들을 담고 다시 사용자에게 보여지게 될 
+
+View에 대한 정보를 포함하는 객체이다. 한 마디로 이 객체를 return 받은 DispatcherServlet은 이 객체를 토대로 View를 설정한다는 것이다.
+
+
+하여튼 이렇게 만들어진 Controller 객체를 IOC컨테이너에 빈으로 구현해야 한다.
+
+web.xml이 있는 디렉토리에 "Front Controller이름-servlet.xml" 파일을 생성한다.
+
+예를 들어 위에서 servlet mapping에서 name으로 지정한 이름이 dispatcher라면 dispatcher-servlet.xml 파일을 만들면 된다.
+
+이 xml 파일은 IoC 컨테이너에 의해 참조되어 생성할 빈에 대한 설정을 적는 파일이고 
+
+DispatcherServlet에 의해 호출될 Controller 빈들을 생성하기 위한 설정 파일이기도 하다.
+
+이 설정 파일에 들어가는 기본적인 내용들이 있을텐데 그것은 spring에서 제공하고 있다.
+
+쉽게 생각하면 IoC 컨테이너에 대한 설정파일이기 때문에 그냥 IoC 컨테이너의 설정파일 양식을 갖다 붙여 넣는다고 생각하면 된다.
+
+
+이 내용은 구글에 spring docs라고 치면 spring에서 제공하는 여러 가지 document들이 있는 사이트가 나오는데
+
+거기에 들어가면 여러 가지 내용들이 나올 것이다. 그 중에 core를 선택한다.
+
+core의 옆을 보면 알겠지만 IoC 컨테이너에 대한 doc을 제공하고 있다. 그것을 참조할 것이다.
+
+왼쪽에서 Container Overview를 선택하고 Configuration metadata를 클릭하면 xml 파일에 대한 기본 양식이 적혀 있는 것이 나온다.
+
+우리는 그것을 복사해서 생성한 xml파일에 복사하고 이제 bean 태그를 이용해 Controller 빈을 생성할 것이다.
+
+
+그럼 DispatcherServlet은 요청을 받았을 때 그 설정 파일을 토대로 생성된 Controller를 bean을 IoC 컨테이너로 부터 가져다가 사용하게 된다.
+
+이 때 필요한 Controller를 결정하는 방식은 HandlerMapping 객체에 의해 정해진다.
+
+
+
+Spring에서 MVC패턴의 동작 원리를 알아야 한다.
+
+1. DispatcherServlet이 모든 연결을 담당하며, 웹 브라우저로부터의 요청을 받음
+
+2. 요청이 들어오면 DispatcherServlet은 HandlerMapping 객체에게 컨트롤러 빈 검색을 요청함
+
+HandlerMapping은 각 HandlerMapping의 종류에 따라 각자의 방식으로 알맞은 컨트롤러 Bean 객체를 찾아 DispatcherServlet에 전달함
+
+3. DispatcherServlet은 전달받은 컨트롤러 객체를 처리할 수 있는 HandlerAdapter 에게 요청 처리를 위임
+
+4. HandlerAdapter는 컨트롤러의 알맞은 메서드를 호출해 요청을 처리함
+
+5. 처리 결과를 ModelAndView라는 객체로 DispatcherServlet에게 반환
+
+6. DispatcherServlet은 전달받은 ModelAndView에서 setViewName으로 설정된 View이름을 ViewResolver에게 전달하고
+
+ViewResolver는 실제 사용자에게 넘겨질 view를 만들 view 객체를 선택한다.
+
+# view 객체는 Controller 처리 결과 화면에 대한 정보를 갖는 객체이다. 즉, 사용자에게 실제적으로 넘어갈 View에 대한 정보를 갖는 객체다.
+
+여기서 View 객체를 선택하는 방식은 ViewResolver마다 그 방식이 다르다.
+
+만약 ViewResolver에 정의된 방식으로 View 객체를 찾지 못했을 경우 NULL을 반환
+
+이 때 ViewResolver가 여러개 정의 되어 있다면 설정된 우선순위 순으로 ViewResolver가 동작한다.
+
+첫 번째 우선순위를 갖는 ViewResolver가 NULL을 반환하면 다음 ViewResolver가 자신의 방식으로 View객체를 찾아 리턴한다.
+
+7. DispathcerServlet는 VeiwResolver가 리턴한 View 객체에게 응답 결과 생성을 요청
+
+8. JSP를 사용하는 경우, View 객체는 JSP를 실행함으로서 브라우저에게 전송할 응답 결과를 생성함
+
+ModelAndView의 Model 객체에 담겨 있는 데이터가 응답 결과에 필요하면 즉, ModelAndView로 설정한 데이터들, 결과값이 
+
+Model에서 데이터를 꺼내 JSP 에서 사용할 수 있다.
+
+View 객체가 view를 생성하는 방법은 View 객체마다 그 방식이 다르다.
+
+
+
+하여튼 여기서 DispatcherServlet은 HandlerMapping에게 자신이 필요한 Controller의 검색을 요구한다.
+
+이 때 우리가 따로 HandlerMapping 객체를 지정하지 않으면 DispatcherServlet.properties에 정의되어 있는
+
+기본 객체들이 default값으로 정의되어 그 객체들을 사용하게 된다.
+
+이 때 기본적으로 정의되어 있는 HandlerMapping 객체는 BeanNameUrlHandlerMapping과 RequestMappingHandlerMapping이다.
+
+BeanNameUrlHandlerMapping는 이름에서도 알 수 있듯이 요청으로 들어온 url과 Controller 빈의 이름을 매칭시켜 Controller를 선택한다.
+
+그래서 우리가 지금 사용하게 될 방식 또한 요청에 대한 url을 Controller 빈의 이름으로 사용하는 방식이다.
+
+
+어쨋든 -servlet.xml 파일에 우리가 만든 Controller를 bean 태그를 이용해 생성하고 이름에는 url을 넣는다.
+
+그럼 그와 같은 url 요청이 들어오면 DispatcherServlet에게 요청이 들어가고 DispatcherServlet는 
+
+BeanNameUrlHandlerMapping에게 IOC 컨테이너에 있는 Controller 빈 중에 요청에 알맞는 Controller를 요구한다.
+
+그럼 handler는 Controller를 찾아 빈을 반환하고 그 빈을 다시 HandlerAdapter에게 넘겨 특정 로직을 수행하고
+
+그 결과로 나온 ModelAndView 객체를 반환 받아 그걸 갖고 또 뭘 하고..하여튼 이런 식으로 동작한다.
+
+# 요청에서 url과 bean의 id가 같은 것끼리 매핑되는 이유는 요청을 매핑시키는 HandlerMapping가 default로 BeanNameUrlHandlerMapping이기 때문이다.
+
+
+이 때 중요한 게 우리가 만든 Controller 객체에 ModelAndView 객체를 통해 다시 사용자에게 반환될 특정 View를 설정하는데
+
+그렇게 설정된 View는 forwarding을 통해 서버 내부적으로 요청에 대한 정보를 가진 채로 새로운 요청으로서 동작할 것이다.
+
+forwarding 또한 url 요청에 해당하기 때문에 servlet을 거치게 되는데 우리가 위에서 url 패턴으로 '/'를 적용해 두었다.
+
+url 패턴에는 여러 가지가 있다. 그 중에는 우선순위도 존재하는데 1위는 정확한 url 매핑이다.
+
+정확한 url 매핑이라는 것은 정확한 절대 경로와 확장자까지 포함하는 완벽한 url 패턴을 말한다.
+
+정확한 url 매핑이라는 말 보다는 매핑 패턴이 긴 것? 이라고 하는 게 맞을 것 같다.
+
+단순히 /test 보다는 /test/test2 에서 /test/test2이 우선순위가 더 높다. 당연한 것이지만 말이다.
+
+물론 /test/test2이 더 높은 우선순위를 갖기 위해서는 요청도 /test/test2를 포함해야 한다. 
+
+/test라고만 요청이 오면 당연히 /test가 우선순위가 높다. /test와 요청 /test가 일치하기 때문에 정확성이 높아서이다.
+
+그리고 애초에 url /test는 /test/test2가 받을 수 없다. /test/test2로 매핑했으면 /test/test2를 포함해야 한다.
+
+두 번째 우선순위는 디렉토리 패턴(/~~/*)이고 세 번째가 확장자 패턴(*.확장자) 마지막이 default 매핑이다.
+
+'/'가 default 매핑에 해당된다. default 매핑은 위의 세 가지를 제외하고 나머지 url에 대해서 처리한다는 것이다.
+
+# default의 의미가 그런 뜻인 것 같다. 특정 url매핑이 없을 때 사용되는 Servlet을 설정해 놓는 것이다.
+
+
+즉, 위의 세 가지 url 패턴에 대한 매핑 정보가 없으면 '/'를 따르게 되는 것이다.
+
+${TOMCAT_HOME}/conf/web.xml 파일을 열어 보면 세 개의 서블릿 매핑이 존재한다.
+
+*.jsp 와 *.jspx에 대한 확장자 패턴 두 개와 '/'에 대한 default 매핑 한 개이다.
+
+즉, .jsp 와 .jspx 형태의 url 요청을 제외하면 모두 '/'로 매핑되어 있는 servlet이 처리한다는 것이다.
+
+
+하지만 우리는 위에서 프로젝트 web.xml에 DispatcherServlet을 '/' url pattern으로 매핑했다.
+
+이렇게 되면 ${TOMCAT_HOME}/conf/web.xml에 있는 default 매핑이 무시되고 DispatcherServlet가 default Servlet이 된다.
+
+따라서 .jsp와 .jspx는 다른 serlvet이 처리하겠지만 나머지 url 형태에 대해서는 DispatcherServlet을 통해 요청을 받는다는 것이다.
+
+그래서 우리가 ModelAndView에 View페이지에 대한 ViewName을 작성할 때 .jsp 형태로 넘기면 제대로 View가 작동하는 것이다.
+
+만약 우리가 '/'가 아니고 DispatcherServlet를 '/*'로 매핑해 놓았다면 확장자 보다 우선순위가 높아져서 
+
+.jsp나 .jspx 뿐만 아니라 정확한 절대 경로를 제외한 모든 url 패턴에 대해서 DispatcherServlet가 처리하게 되고
+
+그럼 ModelAndView에서 setViewName에 .jsp 확장자 형태의 url을 넣을 경우 또 DispatcherServlet을 통해 요청이 받아지게 된다.
+
+그 이유는 setViewName에 넣은 url이 바로 새로운 요청이 되기 때문이 아니고, 기본으로 설정된 Resolver인 InternalResourceViewResolver이
+
+setViewName에 설정된 url을 RequestDispatcher를 통해 forwarding하기 때문이다. 
+
+# 이 때 다른 Resolver도 결국은 forwarding을 하는 것으로 사료됨. 밑의 가설에 대한 내용 참조.
+
+forwarding 또한 내부적이지만 새로운 url요청으로 처리하는 것으로 처리되기 때문에 DispatcherServlet에 걸리는 것이다.
+
+하지만 이럴 경우 또 위의 MVC 패턴이 작동하는 방식으로 요청이 처리될 텐데 그렇게 되면 DispatcherServlet은 HandlerMapping 객체에게
+
+자신이 받은 url에 대한 Controller를 또 요구하고 컨테이너에서 Bean을 찾아야 하는데 .jsp 형태로 우리가 저장한 빈이 없기 때문에
+
+찾지 못 하게 되어 에러가 발생한다. 만약에 View에 대한 .jsp형태의 Controller 빈을 만들어 두었다고 해도 결국은 다시
+
+그 Controller에서 반환하는 url은 '/*' 패턴에 걸려서 무한 루프에 빠지게 된다.
+
+
+
+
+그리고 문제는 이 뿐만이 아니다.
+
+'/*'를 해결하기 위해 '/'를 하기는 했는데 여기에도 문제가 있다.
+
+우리가 Spring을 통해 MVC를 구현하는 것은 Model View Controller가 확실히 구분되고 
+
+모든 요청은 Dispatcher를 통해서 Controller를 거친 후에 View가 전달되는 형태를 거쳐야 한다.
+
+하지만 위처럼 '/'형태로 url을 매핑할 경우 .jsp 파일이나 .jspx 파일을 DispatcherServlet를 거치지 않고 바로 요청해서 받을 수 있다는 것이다.
+
+우리가 의도한 것은 요청을 보냈을 때 그 요청이 DispatcherServlet을 거쳐 Controller에 의해 Model 처리를 하고 View가 반환되는 것인데
+
+.jsp와 .jspx에 대해서 바로 사용자가 View를 반환받을 수 있게 되는 것이다. DispatcherServlet을 거치지 않게 되는 것이다.
+
+
+참 이러지도 저러지도 못 하는 애매한 문제가 발생한다.
+
+이것을 해결하는 방법을 다음 내용에서 알아 보도록 하자.
+
+
+
+
+가설)
+
+한 가지 가설이 생겼다. DispatcherServlet의 url패턴을 /* 로 했을 때의 이야기이다.
+
+우리가 따로 ViewResolver를 설정하지 않으면 기본적으로 InternalResourceViewResolver가 기본 ViewResolver로 설정되고
+
+InternalResourceViewResolver는 default로 InternalResourceView라고 하는 View 클래스를 사용한다.
+
+InternalResourceView는 setViewName에 정의된 ViewName을 리소스 url로 사용하여 내부적으로 forwarding을 하도록 한다.
+
+이 말은 ViewName으로 설정된 값이 forwarding의 url로서 사용된다는 것이고 forwarding을 하게 될 경우
+
+새로운 요청으로서 작용하기 때문에 DispatcherServlet의 url 패턴 '/*'에 걸리게 된다.
+
+만약 이 때 다른 View 객체들도 forwarding을 사용하는 형태로 요청을 위임하여 View를 생성하는 형태인 지 
+
+아니면 View 객체가 자체적으로 View를 생성하는 형태인 지 궁금하다.
+
+만약 다른 ViewResolver를 사용하여 다른 View 객체를 사용했을 때 url 패턴을 '/*'로 설정해도 문제가 없다면
+
+View 객체 스스로 View를 만들어낸다는 것이고 만약 문제가 있다면 View객체는 렌더링 기능만 제공하고 
+
+요청을 위임하는 형태를 갖는다는 것이 된다. 
+
+그래서 실험해본 결과가 나왔다.
+
+일단 TilesView를 사용하여 실험했는데 TilesView도 최종적으로 layout에 해당하는 jsp를 forwarding으로 요청한다는 가정으로 실험했다.
+
+만약 Forwarding을 한다면 TilesView에 의해 최종적으로 완성되는 View인 layout에 해당하는 jsp파일을 요청할 것으로 예상.
+
+그래서 layout jsp파일 요청을 처리할 Controller를 만들고 
+
+Forwarding할 경우 Controller의 url패턴에 걸리게 한 뒤 @responsebody를 통해 특정 값을 출력하도록 해 보았다.
+
+만약 forwarding방식이 아니고 View 객체 자체적으로 View를 처리한다면 DispatcherServlet의 url패턴을 /*로 하더라도 
+
+url패턴에 걸릴 일 없이 그냥 View를 출력하면 된다. 하지만 실험 결과 특정 값이 출력되었다.
+
+결국 일단은 내부적으로 forwarding 과정을 거친다는 결론이 나왔다.
+
+그렇다고 해서 setViewName = forwarding 이라고 생각하는 것은 좋지 않다. 왜냐하면 흐름을 파악하는 데에 혼동을 주기 때문이다.
+
+setViewName에 설정된 값은 ViewResolver가 그에 맞는 처리를 할 View가 있는 지 파악하는 데 사용되는 것이다.
+
+그리고 View에 의해 처리될 때 forwarding이 사용되는 것이다. ViewName이 그대로 forwarding되는 url 요청이라고 생각하면 
+
+뭔가 앞뒤가 안 맞는 경우가 발생하기 때문에 혼동이 올 수 있으니 조심하자.
+
+그래도 url 패턴을 /*로 설정해서 DispatcherServlet에 계속 걸리게 하면 안 되겠다.
+
+제대로 *.jsp 확장자에 대한 요청이 jsp servlet에 의해 처리될 수 있도록 '/'로 설정해 놓자.
+
+
+
+
+
+
+근데 더 문제가 생겼다.
+
+나는 이 실험을 TilesView를 이용해서 할 건데, TilesView는 내부적으로 include를 사용하는 것 같다.
+
+아마도 설정파일을 기반으로 include를 사용해서 jsp 파일들을 조립하여 새로운 jsp 파일로 만들고
+
+그 파일을 토대로 DispatcherServlet이 response를 설정해서 정적인 파일을 만들어내는 듯 하다. 
+
+include가 RequestDispatcher의 include이기 때문에 내부적으로 다른 jsp파일을 포함하여 같이 컴파일 되는 형태라
+
+url 요청으로서 동작은 안 할 것 같기는 한데 혹시 이게 url 요청으로서 작동할 수도 있으니 
+
+만약 위의 실험에서 에러가 났을 때 이 것 때문에 에러가 나는 것인 지 잘 확인해 보자.
+
+
+
+
+
+
+https://www.logicbig.com/tutorials/spring-framework/spring-web-mvc/dispatcher-servlet-properties.html
+
+https://develop-im.tistory.com/9
+
+
+
+https://lng1982.tistory.com/97

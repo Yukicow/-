@@ -1,0 +1,90 @@
+
+
+파이썬 내에 있는 에러에 대한 것이 아닌 사용자가 직접 에러를 만드는 것.
+
+
+class 를 통해 만들 수 있다.
+
+
+예제 1)
+
+class ero(Exception):
+    pass
+
+
+try:
+    print("한 자리 수 나눗셈 계산기")
+    num1 = int(input("숫자 입력"))
+    num2 = int(input("숫자 입력"))
+    if (num1 >=10) or (num2 >= 10):
+        raise ero
+    print("{0} % {1} = {2} 입니다.".format(num1, num2, int(num1/num2)))
+    
+except ero:
+    print("10미만의 숫자를 입력해 주세요.")
+    
+
+
+
+예제 2)
+
+
+class ero(Exception):
+    def __init__(self, name):
+        self.name = name
+        
+    
+    def __str__(self):  # 객체 자체를 출력할 때 넘겨주는 형식을 지정해주는 메서드이다. 여기서 str이므로 문자열로 넘겨준다.
+        return self.name
+
+
+try:
+    print("한 자리 수 나눗셈 계산기")
+    num1 = int(input("숫자 입력"))
+    num2 = int(input("숫자 입력"))
+    if (num1 >=10) or (num2 >= 10):
+        raise ero("입력한 값은 {0}과 {1} 입니다.".format(num1, num2)) # 괄호 안에 있는 것이 name에 대한 변수
+    print("{0} % {1} = {2} 입니다.".format(num1, num2, int(num1/num2)))
+    
+except ero as err: # as는 선언 하는 것과 비슷함. 단 err라는 이름으로만 사용 가능해짐.
+    print("10미만의 숫자를 입력해 주세요.")
+    print(err)
+
+
+예제2 는 ero에 어떤 정보를 입력하고 그 정보까지 출력되게 하는 방법이다.
+
+
+
+raise를 통해 ero() 객체를 생성하게 ()안의 정보는 클래스 자동호출 함수를 거치며 객체 안에 저장된다.
+
+그리고 객체에 저장된 self.name은 __str__을 거치는데 __str__은 어딘가에서 객체가 출력될 때 그에 대한 데이터 값으로 
+
+return 뒤에 있는 것을 넘긴다는 것이다. # return 이 받는 값의 자료형은 문자형이어야 한다.
+
+__str__ 을 거치지 않으면 호출될 때 해당 객체의 메모리 주소값이 출력된다.
+
+
+이제 raise ero()로 오류를 발생시키면서 생선된 예외 클래스의 인스턴스 ero()를 except에서 실행하는데 
+
+아직 ero는 변수 선언이 안되어 있다. 그래서 ero를 부를 만한 이름이 없는데 이 때 as err로 err라는 이름을 부여해 줬다.
+
+그리고 밑에서 부여해준 이름을 이용해 print(err)를 하면 아까 __str__을 거쳤기 때문에.
+
+return 뒤의 self.name이 잘 출력될 것이다. # 여기서 self.name은 raise ero()에서 괄호 안에 있는 문자열이다.
+
+
+근데 여기서 문제점 발견.
+
+일반적인 클래스를 만들고 __str__ 없이 객체를 호출하면 메모리 주소가 출력되는데
+
+이상하게 예외 클래스 에서는 __str__을 생략해도 제대로 값이 출력된다. 심지어는 자료형이 아니고 정수형이어도 출력이 된다.
+
+이건 BaseException(상속할 때에는 Exception을 이용)의 특성 때문인데
+
+이 클래스의 인스턴스가 호출 되면 str()인스턴스에 대한 인수 표현이 반환되거나 인수가 없는 경우 빈 문자열이 반환되기 때문이다.
+
+결국 내가 발생시킨 에러는 Exception의 인스턴스이고 호출될 때 자동으로 인수 표현이 반환되기 때문에 
+
+인수로 쓰인 num1 num2 값이 반환되는 것이다.
+
+그래서 위의 __init__ 부분을 pass로 해 놓아도 알아서 잘 출력된다. # 인수는 raise 때 입력됐기 때문.

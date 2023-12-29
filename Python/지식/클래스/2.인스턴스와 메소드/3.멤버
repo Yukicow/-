@@ -1,0 +1,38 @@
+
+멤버 
+
+멤버는 클래스 내에서 객체에 저장된 변수들을 뜻하며.
+
+만들어진 객체에 추가적으로 멤버를 추가할 수 있다.
+
+
+class pyshic_inform:
+    
+    def __init__(self, height, weight, age):
+        self.height = height # 얘네는 다 멤버임
+        self.weight = weight
+        self.age = age
+        
+
+
+    def infor(self): #self만 써주면 인스턴스에 저장된 값을 알아서 가져오는 것
+        print("키 : {0} 몸무게 : {1} 나이 : {2} ".format(self.height, self.weight, self.age))
+        
+    def infor2(self): #self만 써주면 인스턴스에 저장된 값을 알아서 가져오는 것
+        print("키 : {0} 몸무게 : {1} 나이 : {2} 친구 수 : {3}".format(self.height, self.weight, self.age, self.friend))
+
+a = pyshic_inform(float(input("키")),float(input("몸무게")),float(input("나이")) )
+a.infor()
+
+b = pyshic_inform(float(input("키")),float(input("몸무게")),float(input("나이")) )
+b.friend = 5
+b.infor2()
+
+
+위 처럼 b에 '객체이름.변수이름' 형태로 새로운 멤버를 만들어줄 수 있음.
+
+a에는 'friend'라는 변수값이 없지만 b에는 저장된 것.
+
+a를 이용해 infor2 함수를 실행하면 friend에 대한 정보가 없기 때문에 오류가 뜨지만
+
+b를 이용해 avw함수를 실행하면 문제 없이 출력 됨. 

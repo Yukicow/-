@@ -1,0 +1,152 @@
+
+
+
+
+
+
+ArgumentResolver는 HandlerAdapter가 핸들러를 호출하기 전에 필요한 Parameter들을 보고
+
+생성해서 전달하는 것을 도와주기 위해 있는 객체이다.
+
+다르게 말하면 resolver를 통해 구현 가능한, 또는 등록되어 있는 객체들만큼 우리가 간편하게
+
+Controller에서 바로 인자로 받아 사용할 수 있는 것이다.
+
+
+이런 Parameter들을 생성하기 위해서 ArgumentResolver는 보통 Converter를 많이 사용한다.
+
+쿼리스트링이나 x-www-뭐시기 그 형태로 넘어오는 Parameter들, 즉, @RequestParam이나 @ModelAttribute가 사용된 경우는 
+
+default로 등록된 converter 또는 필요하다면 우리가 생성해 등록한 converter를 사용할 것이고, 
+
+body에 데이터가 담겨오는 형태의 @RequestBody 등은 jackson같은 라이브러리나, 우리가 생성한 Converter를 이용한다.
+
+또는 등록되어 있는 객체를 바로 넘기기도 한다.
+
+HttpServletRequest와 같이 ArgumentResolver에 미리 등록되어 있는 객체들은 따로 Converting 과정 없이 인자로 넘길 수 있다.
+
+ArgumentResolver에 등록된 객체들은 미리 생성해 놓았다가 필요하면 전달하기 때문에 특정 과정 없이 바로 전달되는 것이다.
+
+
+ArgumentResolver에 미리 등록되지 않은 객체나 Primitive타입은 핸들러 메소드(컨트롤러의 컨트롤 메소드)에서 
+
+앞에 @RequestParam 또는 @ModelAttribute가 자동 적용된 것으로 판정한다. 즉, 생략된 것으로 간주한다는 것이다.
+
+Wrapper클래스나 Primitive타입은 @RequestParam이처리하고, 다른 일반 객체들은 @ModelAttribute로 처리하는 듯 하다.
+
+그래서 이러한 경우에는 핸들러 메소드에 어노테이션과 함께 명시되어 있는 객체 타입을 보고
+
+그 타입으로 사용자가 넘긴 인자들을 잘 변환해서 적절하게 데이터를 넣어 반환해야 하기 때문에 converting과정이 필요하다.
+
+
+기본적인 Converter로는 해결이 안 되는 타입이 있을 수 있다. 
+
+( 이 부분에 대한 자세한 내용은 Converter에 대한 내용 참조 )
+
+예를 들어 객체 안에 객체가 있는 경우이다.
+
+우리가 @ModelAttribute로 객체를 매핑하는 경우 ArgumentResolver가 converter를 이용해서 요청인자들의 값을 가져온 뒤
+
+객체의 필드에 주입하는 형식으로 동작한다고 볼 수 있다.
+
+이 때 primitive타입, Wrapper클래스 등에 대한 converter는 기본으로 등록되어 있기 때문에 
+
+따로 converter를 등록하지 않아도 객체가 만들어지고 인자로 넘어온 것이었다.
+
+
+하지만 객체의 필드에 객체가 존재한다고 생각해 보자.
+
+그럴 경우 converter를 생성해서 등록하거나 따로 어노테이션을 만들고, 
+
+그 어노테이션에 대해 Parameter처리가 가능한 ArgumentResolver를 생성해서 등록해도 된다.
+
+첫 번째인 Converter를 만들어서 등록하는 것은 @ModelAttribute를 처리하는 ArgumentResolver가
+
+우리가 등록한 Converter를 호출해서 타입을 변환하는 형태로 동작하는 것이고
+
+두 번째 방법인 특정 객체나 어노테이션을 위한 ArgumentResolver를 직접 생성하는 것은 말 그대로 우리가 로직을 짜서 동작하게 하는 것이다.
+
+이 때 내부적으로 Converter를 사용할 수도 있고 아니면, 어차피 다른 곳에서 만든 Converter가 또 쓰일 일이 없을 것 같다면 
+
+converter를 따로 만들지 않고 ArgumentResolver 내부에 그냥 converting작업에 대한 로직을 작성하는 식으로 할 수도 있다.
+
+
+
+Map객체나 Map을 상속받은 객체는 Spring에서 이미 선언한 아규먼트 리졸버가 처리하기 때문에 전달 할 수 없다.
+
+Map객체를 전달하려면 Map을 필드로 가지고 있는 별도의 객체를 선언한 후 사용해야 한다고 한다.
+
+
+
+
+
+====== 내가 헷갈렸던 것 =====
+
+핸들러 메소드에서 @RequestParam으로 MultiPartFile을 받을 수 있다.
+
+근데 왜 하필 @RequestParam으로 MultiPartFile을 주는 것일까 생각해 보았다.
+
+@RequestParam은 잘 보면 request 객체로부터 단일 Parameter를 얻어서 특정 객체에 바로 매핑시킬 때만 사용하는 것 같던데.
+
+뭔가 MultiPartFile은 다른 타입에 비해 복잡해서 단순히 request 객체로부터 단일 인자를 얻는다고 해도
+
+바로 똬~ 해서 만들어낼 수가 없는 느낌이 들어서 잘 안 어울린다고 생각했다.
+
+
+근데, 오해한 게 세 가지 있었다.
+
+첫 째, MultiPart/form-data로 요청이 들어오면 설정에서 따로 끄지 않는 이상
+
+MultipartResolver가 동작하는데, 이때 이녀석은 기존 request를 MultiPart요청에 맞는 다른 request객체로 바꿔 준다. 
+
+
+둘 째, 실제 멀티파트 요청에서 사용되는 StandardMultiPartHttpServletRequest 소스코드를 뒤져 보니까 
+
+AbstractMultipartHttpServletRequest를 상속받고 있고 거기에는 getMultiPartFiles가 있다.
+
+그럼 @RequestParam을 처리하는 ArgumentResolver에서는 request객체에서 바로 getMultiPartFiles을 받은 다음
+
+만약 값이 하나면 MultiPartFile 하나를, 여러개의 업로드가 돼서 여러개라면 컬렉션에 담긴채로 반환하는 형태인 듯 하다.
+
+
+MultipartRequest multipartRequest = request.getNativeRequest(MultipartRequest.class);
+		if (multipartRequest != null) {
+			List<MultipartFile> files = multipartRequest.getFiles(name);
+			if (!files.isEmpty()) {
+				arg = (files.size() == 1 ? files.get(0) : files);
+			}
+		}
+
+
+실제 소스 코드이다. 이런 형태로 ArgumentResolver가 되어 있다.
+
+여기서는 AbstractMultipartHttpServletRequest의 getMultiPartFiles()가 아니라 그냥 getFiles로 받고 있다.
+
+아무래도 getMultiPartFiles()는 반환타입이 Map이다 보니 
+
+한 번 내부적으로 List형태로 만든 다음 반환하도록 하는 메소드를 따로 만든 게 아닐까 싶다.
+
+하여튼 동작 원리는 이렇다는 것이다.
+
+
+이렇게 보면 request객체로부터 이미 request객체에 만들어져 있는 MultiPartFile을 가져오는 형태이니
+
+@RequestParam에 동작하는 ArgumentResolver가 처리하는 게 맞는 것 같기도 하다.
+
+왜냐하면 파일도 따지고 보면 사용자가 보낸 Parameter 데이터 중 하나이고 그 형태가 복잡해서
+
+request측에서 MultiPart형태로 만들어서 여러가지 처리를 돕기에 좋은 형태로 저장하고 있는 게 전부인 느낌이니까.
+
+따지고 보면 request.getParameter로 인자를 받는 것과 크게 차이가 없다.
+
+getParameter의 데이터들은 너무 단순한 String 데이터이기 때문에 위와 같이 따로 객체를 생성할 필요가 없다.
+
+만약 getParameter의 데이터도 String이 아닌 ParameterString 이런식으로 특별취급 했다고 생각하면
+
+MultiPartFile과 크게 다를 건 없어 보인다.
+
+
+
+세 번째 오해가 ㄹㅈㄷ다. MultipartFile은 @ModelAttribute로도 불러올 수 있다.
+
+즉, @ReqeustParam과 @ModelAttribute를 다루는 ArgumentResolver 둘 다 지원한다는 것이다.

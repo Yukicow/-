@@ -1,0 +1,103 @@
+
+
+
+
+
+
+Mybatis는 우리가 작성한 xml파일을 읽어서 sqlSessionFactory 라는 객체에 의해
+
+mapper 객체를 생성하고 그 mapper 객체가 xml에 정의된 기능들을 수행가능하기 때문에 
+
+DAO에서 그 mapper객체를 호출함으로써 동작을 수행하도록 하는 식으로 사용했다.
+
+# mapper객체는 Mybatis라이브러리 객체가 xml파일을 읽어서 만들어낸 하나의 DAO 구현체라는 느낌으로 생각하면 좋다.
+
+현재는 @Mapper 라는 어노테이션이 생기면서 인터페이스를 매퍼를 바로 연결시켜 주는 편리한 기능이 생겼다.
+
+Mapper가 붙은 인터페이스는 그와 매핑되는 mapper 객체를 자동으로 IoC컨테이너에 담아주기 까지 했기 때문에
+
+우리는 인터페이스에 대한 변수를 설정하고 @AutoWired를 통해 바로 연결해서 사용도 가능했다.
+
+
+하지만 이것도 문제가 있는 게 DAO에서 xml을 통해 생성된 mapper 객체로부터 기능을 호출해서 사용하는 것과
+
+@Mapper 를 통해 단순히 클래스를 mapper 객체에 종속시키는 것은 차이가 있다는 것이다.
+
+
+일반적으로 @Mapper 형식으로 종속을 시켜버리면 Mybatis에 너무 종속적이어서 다른 구현방법을 통한 
+
+DAO의 구현이 제한이 되기도 하고, 뭐 오버로드를 지원하지 않는다나 뭐라나 잘은 모르겠지만 단점이 존재한다.
+
+하여튼 @Mapper 방식과 단순히 호출해서 mapper 기능을 사용하는 방식 중 무엇을 택할 지는 우리의 몫이다.
+
+
+mapper를 호출해서 사용하는 방식도 유지보수의 번거로움 등과 같은 단점이 존재하기 때문에 때에 따라 사용하면 될 것 같다.
+
+뉴렉처님께서는 mapper 호출방식을 선호하는 듯 하다. 아마 인터페이스의 종속성을 낮추기 위해서인 것 같다.
+
+그래서 우리도 mapper 호출 방식으로 DAO를 구현해 볼 것이다.
+
+
+
+전에는 @Mapper를 통해서 xml을 읽어서 만들어진 Mapper와 우리의 DAO객체가 알아서 연결되고 사용되었지만
+
+이제는 직접 우리가 그것을 코드상에서 다루어야 한다.
+
+sqlSessionFactory이 xml을 읽어서 mapper 객체를 만들어 준다면 그 mapper 객체를 사용하기 위한 객체는 sqlSession 객체이다.
+
+sqlSessionFactory에 의해 생성된 mapper 객체는 Mapper Container에 있기 때문에 sqlSession을 통해 가져와야 한다.
+
+Spring에는 Spring 프레임워크에 의해 관리되는 IoC Container가 있듯이 Mybatis도 Mybatis라이브러리에 의해 관리되는
+
+Mapper 객체들을 관리하기 위한 컨테이너가 있는 것이다. 그렇기 때문에 둘은 독립적이다. 
+
+그래서 우리가 Mapper Container에 담긴 mapper 객체를 사용하기 위해서는 sqlSession객체를 통해서 사용해야 하는데, 
+
+이 때 sqlSession 객체는 Mybatis에서 자동으로 Spring의 IoC컨테이너에 담아 주기 때문에 AutoWired로 연결이 가능하다.
+
+
+
+
+사용법
+
+일단 인터페이스 위에 달아놨던 @Mapper는 지우도록 하고 인터페이스를 구현하는 실제 사용될 구현체 DAO클래스를 만들자.
+
+그 변수 위에는 @Repository 등과 같이 IoC컨테이너에 담길 수 있도록 어노테이션을 붙여 준다.
+
+그리고 멤버 변수로 sqlSession 변수를 하나 넣고 @AutoWired를 붙인다. 인터페이스에 정의된 메소드들을 모두 구현해 놓고
+
+각 메소드 안에서는 우리가 사용할 mapper 객체를 불러온 다음 
+
+그 mapper 객체가 구현하고 있는 네임스페이스(인터페이스)의 기능(매소드)을 사용하면 된다.
+
+
+mapper 객체를 불러오는 법은 간단하다.
+
+우리가 멤버변수로 만들어 두었던 sqlSession 객체에 있는 getMapper() 메소드를 이용하면된다.
+
+인자로는 인터페이스에 해당하는 .class를 넘기면 그 인터페이스를 구현하는 mapper가 반환된다.
+
+그럼 우리는 mapper를 받을 때 데이터 타입을 그 인터페이스 형태로 받아서 사용하면 된다.
+
+그럼 인터페이스에 정의된 메소드를 그대로 사용 가능하기 때문에 우리는 retunr값에 필요한 메소드를 호출해서 그대로 반환해 주면 된다.
+
+
+대충 위의 사용법을 사용한 결과는 밑과 같을 것이다.
+
+
+@Repository
+public class testDao{
+
+    @AutoWired
+    private SqlSession sqlSession;
+
+    public Dto test(){
+
+       TestInterface ti = sqlSession.getMapper(TestInterface.Class);
+
+       return ti.getDto();
+    }
+
+}
+
+

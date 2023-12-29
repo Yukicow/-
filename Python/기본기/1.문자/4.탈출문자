@@ -1,0 +1,35 @@
+
+
+탈출 문자.
+
+
+1. \ \는 주석인데 문장 내에 \를 쓰는법.
+
+\\ 처럼 두 번쓰면 된다. 문장 내에 ""를 출력하는 방법도 \를 앞에 써주면 된다.
+
+
+2. \r 커서 맨 앞으로 이동
+
+ex)
+
+print("apple\rpine")
+
+-> pineapple
+
+
+3. \b 백스페이스 앞글자 하나 삭제.
+
+ex)
+
+print("redd\bapple")
+
+-> redapple
+
+
+4. \t 탭 한 탭만큼 띄움
+
+ex)
+
+print("red\tapple")
+
+-> red  apple

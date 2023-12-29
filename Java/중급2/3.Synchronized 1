@@ -1,0 +1,157 @@
+
+
+
+
+동기와 비동기에 대해 기억하는가?
+
+동기는 추구하는 바가 같은 것을 의미한다.
+
+즉, 같은 일을 순차적으로 실행한다는 것이다.
+
+하지만 비동기는 서로의 목적이 달라 서로를 구분하고 각자의 일을 진행한다.
+
+
+Synchronize는 '동기화 하다' 라는 뜻이다.
+
+즉, 특정 여러 집단을 하나의 목적으로 통일시키는 것이다.
+
+코딩에서도 같은 역할을 한다.
+
+
+Synchronized를 스레드의 run() 메소드 앞에 써 주게 되면
+
+다른 모든 스레드들이 Synchronized 된 메소드로 목적을 통일시킨다.
+
+이 말은 즉, 다른 스레드들이 진행하던 작업을 멈추고 Synchronized 메소드의 로직에 집중한다는 것이다.
+
+Synchronized 메소드가 끝나기 전까지 다른 스레드들은 자신들의 작업을 수행하지 않는다.
+
+
+하지만 여기서 주의할 점이 있다.
+
+Synchronized는 같은 객체의 Synchronized 메소드에 대해서만 lock을 건다.
+
+다른 객체에 대한 수행이나 같은 객체라도 일반 Synchronized하지 않은 메소드라면 영향이 없다는 것이다.
+
+이게 무슨 말이냐. 밑의 예제를 보자.
+
+밑의 예제는 보기 불편하니 예외처리는 제외하고 작성한 로직이다.
+
+
+public class Example{
+
+    private String example_variable;
+
+    public static void main(String[] arg){
+
+        Example ex = new Example();
+
+        new Thread(name -> {
+        for(int i = 0: int < 100: i++){  # 가독성을 위해 ; -> : 로 대체
+            ex.example_method1(thread1)
+            }}).start():
+
+
+        new Thread(name -> {
+        for(int i = 0: int < 100: i++){ 
+            ex.example_method2(thread2)
+            }}).start():
+    }
+
+    public synchronized void example_method1(String thread_name){
+
+        example_variable = thread_name;
+
+        Thread.sleep(100);
+
+        if(example_variable.equals(thread_name)){System.out.println("중간에 값이 바뀜.")}
+    }
+
+    public synchronized void example_method2(String thread_name){
+
+        example_variable = thread_name;
+
+        Thread.sleep(100);
+
+        if(example_variable.equals(thread_name)){System.out.println("중간에 값이 바뀜.")}
+    }
+}
+
+
+두 개의 메소드를 갖는 Example클래스를 만들었다.
+
+그리고 ex라고 하는 Example 클래스의 객체도 만들었다.
+
+
+그리고 람다식을 통해 두 개의 익명 Thread 객체를 만들었고 각 객체는
+
+ex객체의 example_method1, example_method2 메소드를 100번 반복한다.
+
+인자로 각각 thread1,thread2를 넘겨 두 Thread 객체의 이름을 달리 했다.
+
+각 메소드가 실행될 때마다 Example 클래스의 객체인 ex의 ex.example_variable의 값에
+
+thread1과 thread2이 번갈아 가며 대입될 것이다. 원래라면 말이다.
+
+하지만 위의 두 메소드는 Synchronized 되어 있기 때문에 한 쪽이 먼저 작업을 시작하면
+
+다른 한 쪽의 작업은 정지된다. 여기서 알 수 있는 것이 Synchronized는
+
+'자신이 호출한 메소드가 포함된 객체'를 lock 한다는 것이다.
+
+
+만약 위의 로직에서 두 Thread 객체가 실행한 메소드가 서로 같은 ex객체의 메소드인
+
+ex.example_method1와 ex.example_method2가 아니고 각자 새로운 Example 클래스 객체의 메소드를 실행했다면
+
+ex1.example_method1, ex2.example_method2 이런 식으로 말이다.
+
+위의 두 스레드는 서로 다른 객체의 작업을 수행하는 것이기 때문에 각자 할 일을 한다.
+
+즉, Synchronized라는 것은 같은 객체 내에서의 수행을 하나로 통일 시킨다는 뜻이다. 다른 객체는 서로 무시한다.
+
+그리고 또 한 가지 주의할 점은 여기서 말하는 '수행이 완전히 끝날 때까지 다른 작업을 수행하지 않는다'라는 것은
+
+동시에 일어나는 병렬적 작업을 중단하는 것이지 두 수행의 병렬적 작업을 중단한다는 의미는 아니다. 
+
+예를 들어 위의 두 메소드들을 총 100번 수행하기로 한다면 하나의 작업이 일어날 때 다른 작업은 잠시 중단되고
+
+그 작업이 완전히 끝나면 JVM에 의해 두 메소드 중 어떤 작업을 이번에는 실행할 지 결정된다.
+
+
+만약 위의 두 메소드가 synchronized되지 않았다면 하나의 작업을 수행하는 중에 다른 쪽의 작업도 수행하기 때문에
+
+1과 2의 내부 로직에 대한 결과가 동시에 병렬적으로 막~ 출력이 되겠지만 synchronized 된 상태에서는
+
+1이 끝날 때 까지는 2의 내부 로직은 중지, 1의 로직이 모두 끝나고 나면 
+
+다음 수행이 될 로직을 JVM이 1이나 2중에서 하나 결정하고 결정된 그 로직의 수행을 하는 동안에는 
+
+같은 객체 내의 Synchronized 메소드들에 대한 또 다른 작업은 아무 것도 일어나지 않는다는 것이다.
+
+즉, 수행 자체는 병렬적으로 일어나지만 수행 도중의 스위칭은 일어나지 않는다는 것이다.
+
+# 직접 시도해 보니까 수행이 고르게 1,2를 왔다갔다 하지 않고 하나를 집중적으로 하다가 좀 지나고 나서 다른 수행으로 스위칭이 일어났다.
+
+
+
+이런 원리를 이용해서 멀티 스레드가 안정적으로 수행될 수 있게 만들 수 있다.
+
+서로 동시에 작업이 수행되다가 데이터가 엉키는 일이 발생하지 않게 잘 조절해서
+
+Synchronized를 이용한다면 안정적인 멀티 스레딩이 가능할 것이다.
+
+
+하지만 위의 방법은 조금 아쉽기도 하다.
+
+모든 같은 객체의 Synchronized에 대해 lock이 걸리기 때문에 만약 특정 synchronized 메소드의 내부 로직 중에
+
+병렬적으로 수행하고 싶은 부분이 있을 때 그것 조차도 lock이 걸려서 접근을 막기 때문이다.
+
+이런 것을 막기 위한 방법이 Synchronized block을 이용하는 것이다.
+
+synchronized의 동기화 방법을 다음 장에 모두 서술해 놓을테니 골라서 보도록 하자.
+
+
+
+

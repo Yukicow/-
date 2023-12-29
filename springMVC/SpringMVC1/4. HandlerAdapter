@@ -1,0 +1,57 @@
+
+
+
+
+
+
+HandlerAdapter도 HandlerMapping객체들과 비슷하다.
+
+각각의 HandlerAdapter는 자신이 처리할 수 있는 종류의 Controller가 지정되어 있다.
+
+예를 들면 @RequestMapping이 사용된 Controller를 처리할 수 있는 Adapter,
+
+또는 Controller인터페이스를 상속받은 컨트롤러를 처리하는 Adapter 등등 종류가 많다.
+
+
+HandlerAdapter를 사용하면 위에서 말한 FrontController가 직접 Controller를 사용할 때의 단점을 모두 보완할 수 있다.
+
+일단 HandlerMapping객체에 의해 찾아낸 Controller를 HandlerAdapter가 처리할 수 있는 객체인 지 확인한다.
+
+처리할 수 없는 경우 null을 반환하고, null일 경우 다음 우선순위의 HandlerAdapter가 처리할 수 있는 지 확인하는 반복과정을 거친다.
+
+이러다가 처리가 가능한 Adapter를 만나면 그 Adapter에 의해 Controller가 호출되고 로직을 수행한다.
+
+그리고 HandlerAdapter는 Controller를 호출해서 수행하고 나온 결과값을 ModelAndView객체로 치환해 FrontController에게 반환한다.
+
+
+Adapter를 사용하면 좋은 이유가 바로 여기에 있다.
+
+일단 FrontController가 Controller가 처리 가능한 녀석인 지에 대한 내용을 다루지 않아도 된다.
+
+단일 책임의 원칙을 지키는 것이다.
+
+또, Adapter에서 ReturnValueResolver를 이용해서 Controller에서 수행된 결과를 ModelAndView객체로 바꾸어 반환하거나
+
+ArgumentResolver를 통해 Controller에서 여러가지 인자를 원하는대로 받아서 사용 가능하도록 하는 등 편리 기능을 제공한다.
+
+물론 FrontController가 이러한 객체들을 직접 사용해도 상관은 없다.
+
+하지만 FrontController 내부에 이를 처리하기 위한 로직이 많이 포함되어야 하고, 이는 너무 복잡해진다.
+
+
+Adapter에서 위와 같은 객체들을 이용하기 때문에 우리는 Controller를 더욱 유연하게 활용 가능한 것이다.
+
+우리가 @Controller 객체 내부에서 메소드에 @RequestMapping을 사용하고 return값을 통해 값을 반환한다.
+
+이 때 우리는 인자에 @ReqeustParam이나, @ModelAttribute를 사용하거나
+
+return타입으로 String, ModelAndView, 원하는 객체 등을 사용할 수 있었다.
+
+이러한 것을 가능하게 하는 것은 Adapter에서 사용하는 ArgumentResolver와 ReturnValueResolver 객체이다.
+
+다르게 말하면 ArgumentResolver와 ReturnValueResolver에서 처리 가능한 값들이 늘어날 수록 그만큼 편해질 수 있다는 것이기도 하다.
+
+
+ArgumentResolver와 ReturnValueResolver에 대한 자세한 내용은 다음장에 적도록 하겠다.
+
+

@@ -1,0 +1,142 @@
+
+
+
+
+QueryString이란
+
+사용자가 입력 데이터를 전달하는 방법중의 하나로, url 주소에 미리 협의된 데이터를 파라미터를 통해 넘기는 것을 말한다.
+
+쉽게 Get 요청에서 url에 Parameter를 적어서 넘기는 것을 말한다.
+
+
+우리는 저번에 어노테이션을 통해 Controller생성하고 url매핑까지 완료했다. 
+
+근데 Controller에서 사용자가 넘긴 Parameter를 필요로 할 텐데 어떻게 가져와서 사용할 수 있을까?
+
+먼저 Get요청일 때와 Post요청일 때가 있을 것이다.
+
+오늘은 Get요청으로 Parameter가 들어왔을 때에 대한 내용을 다뤄 보겠다.
+
+
+아주 간단하다. FrontController는 우리가 Controller로 사용하는 메소드에 매개변수를 입력하면
+
+그 메소드를 호출할 때 필요한 그 매개변수와 매핑되는 데이터, Parameter를 같이 넘겨 준다.
+
+예를 들어 
+
+@RequestMapping("/test")
+public String test(HttpServletRequest request) {
+    String str = request.getParameter("test")
+    return str;
+}
+
+위처럼 url매핑된 메소드 Controller가 존재하고 여기서 그 메소드가 HttpServletRequest객체를 필요로 하고 있다.
+
+그냥 저렇게 매개변수로 원하는 객체나 데이터를 만들면 FrontController는 알아서 데이터를 넘겨 준다.
+
+없는 데이터라면 null을 넘기겠지만 말이다.
+
+
+이렇게 좋은 기능을 제공해 주는데 우리는 아직도 귀찮다.
+
+왜냐면 만약에 request객체를 받았다고 해도 결국 메소드 내부에서 request객체를 이용해 Parameter를 꺼내서 사용해야 한다.
+
+FrontController는 이것마저도 해결해 준다.
+
+매개변수에 QueryString에서 넘긴 매개변수와 이름이 매핑되도록 적으면 그 인자에 대한 데이터를 알아서 추출해서 넘겨 준다.
+
+Parameter는 무조건 String 데이터이기 때문에 매개변수의 데이터 타입도 String으로 맞춰야 한다.
+
+근데 Spring에서는 자동 형변환 기능을 제공하는 듯 하다.
+
+만약 Parameter에 저장된 값이 숫자(정수,실수),문자 일 경우에는 그에 맞는 데이터 타입을 써 주면 알아서 형변환한 값을 넣어 준다.
+
+원래라면 우리가 문자열로 들어온 데이터를 따로 Parsing해서 사용해야 하는데 그걸 대신 해 주는 듯 하다.
+
+예를 들어 위의 예시를 이렇게 사용할 수 있다는 것이다.
+
+@RequestMapping("/test")
+public String test(String test) {
+    return test;
+}
+
+이렇게 하면 FrontController에서 request.getParameter("test")를 실행하고 나온 결과값을 test에 넣어 주는 것과 같다.
+
+우리는 편리하게 Parameter의 이름과 매핑되는 변수명을 사용해서 데이터를 입력받고 바로 사용하기만 하면 된다.
+
+
+하지만 아직도 문제가 있다.
+
+그러면 우리는 무조건 Parameter의 이름과 매핑되는 변수명을 사용해야 하는데 그건 또 싫다.
+
+그래서 이걸 해결하기 위해 @RequestParam 이라는 어노테이션이다.
+
+매개변수의 앞에 @RequestParam("")을 붙이면 ()안에 입력된 Parameter 이름을 갖는 Parameter데이터를 우리가 지정한 매개변수에 입력해 준다.
+
+
+@RequestMapping("/test")
+public String test(@RequestParam("test") int testpower) {
+    return testpower;
+}
+
+이런 식으로 사용하면 test라는 Parameter의 데이터를 testpower에 넣어 주는 것이다.
+
+
+
+근데 아직도 문제가 남아 있다.
+
+만약에 요청에서 인자를 넘기지 않고 요청을 보내는 경우가 있을 수도 있다.
+
+그럴 경우에는 인자가 없기 때문에 에러가 발생하는데 이걸 해결해야 한다.
+
+이것을 위한 기능이 defaultValue이다. @RequestParam 의 ()안에 defaultValue를 설정할 수 있다.
+
+@RequestMapping("/test")
+public String test(@RequestParam(name="test", defaultValue="1") int testpower) {
+    return testpower;
+}
+
+이런 식으로 사용이 가능하다. 그럼 인자가 없을 때 기본으로 test라는 인자의 데이터 값을 "1"이라는 문자열로 설정하게 된다.
+
+만약 인자의 입력 없이 요청이 들어온다면 test의 값이 "1"이니 testpower에도 "1"이 입력될 것이다.
+
+근데 위에 보면 name="test"처럼 name이 추가가 되었다.
+
+원래는 @RequestParam에는 여러 가지 속성을 지정할 수가 있는데 기본적으로 ""만 사용할 경우 name(value로 대체 가능) 속성을 사용하는 것이다.
+
+근데 defaultValue를 사용하게 되면 여러 개의 속성을 사용하게 되는 것이니 구분을 해야 한다.
+
+그래서 원래는 생략했던 name(value)를 넣어 준 것이다.
+
+
+
+위의 방법도 있지만 한 가지 방법이 더 있다.
+
+인자에 기본값을 설정할 수도 있지만 인자가 없을 때 오류가 나지 않도록 하는 속성도 있다는 것이다.
+
+바로 required 속성이다. 
+
+required 속성을 false로 지정하면 인자가 없어도 오류를 발생시키지 않는다.
+
+false와 true는 불리안이기 때문에 ""를 사용하지 않는다.
+
+
+@RequestMapping("/test")
+public String test(@RequestParam(name="test", required=false) String testpower) {
+    return testpower;
+}
+
+
+이렇게 지정하고 test에 대한 인자를 요청시에 넘기지 않을 경우 에러 없이 잘 작동한다.
+
+근데 이 때 주의해야 할 점이 있다.
+
+여기서 우리가 인자를 넘기지 않아도 메소드의 매개변수는 아직 존재한다.
+
+즉, 메소드의 로직상으로는 testpower가 존재해야 한다는 것이다.
+
+그럼 아무 값도 넘기지 않을 경우에는 null일 들어갈 텐데 만약에 매개변수의 데이터 타입을 Object가 아닌 primitive타입으로 하면
+
+null값이 들어갈 수가 없어서 에러를 발생시킨다.
+
+int,double 이런 것들은 null이 담길 수 없으니 required를 사용할 때에는 매개변수를 String이나 primitive타입의 Wrapper클래스를 사용하자.

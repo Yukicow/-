@@ -1,0 +1,85 @@
+
+
+어떤 일에 대한 예외사항이나 오류사항이 있을 때 처리를 도와주는 것.
+
+예를 들면 계산기를 만들었는데 받는 값이 숫자가 아닌 문자가 입력됐을 때처럼 이런 예외적인 사항을 처리하기 위해 예외처리를 이용함
+
+
+사용법
+
+
+try:
+    ~~
+    ~~
+
+except ~~:
+
+위의 형태로 사용 가능.
+
+
+예시)
+
+try:
+    print("나눗셈 계산기")
+    num1 = int(input("숫자 입력"))
+    num2 = int(input("숫자 입력"))
+    print("{0} % {1} = {2} 입니다".format(num1, num2, int(num1/num2)))
+
+except ValueError
+    print("숫자만 입력해주세요.")
+
+
+try 내부에 있는 문장이 실행이 되다가 except에 해당하는 오류가 발생하면 내부에 있는 것을 실행하는 식이다.
+
+모든 예외사항에 대해 각각 추가해 주어야 함.
+
+위의 예시) 에서 두 번째 숫자에 0을 넣으면 또 다른 오류가 발생한다 # 수학에서 0으로 나눌 수는 없기 때문
+
+그럼 그것에 대한 예외 사항도 따로 추가해야 함.
+
+
+ex)
+
+try:
+    print("나눗셈 계산기")
+    num1 = int(input("숫자 입력"))
+    num2 = int(input("숫자 입력"))
+    print("{0} % {1} = {2} 입니다".format(num1, num2, int(num1/num2)))
+
+except ValueError:
+    print("숫자만 입력해주세요.")
+
+except ZeroDivisionError as err: # as err는 밑에 설명 는 발생한 에러가 갖고 있는 정보라고 생각하면 됨.
+    print(err)
+
+
+as err 객체가 갖고 있는 정보를 불러내는 거라고 생각하면 됨.
+
+밑에서 배우겠지만 클래스로도 에러를 만들 수 있는데 그 때 클래스에 저장된 정보를 가져와서 쓸 수 있음.
+
+
+
+간단하게 
+
+except: 라고만 쓰면 try 가 진행 되다가 지정한 에러 외에 모든 에러에 대해 적용한다는 뜻
+
+try:
+    print("나눗셈 계산기")
+    num1 = int(input("숫자 입력"))
+    num2 = int(input("숫자 입력"))
+    print("{0} % {1} = {2} 입니다".format(num1, num2, int(num1/num2)))
+
+except ValueError:
+    print("숫자만 입력해주세요.")
+
+except ZeroDivisionError as err:
+    print(err)
+
+except:
+    print("오류가 발생했어요")
+
+
+
+이러면 except ValueError: 와 except ZeroDivisionError 에 대한 오류가 아닌 다른 오류에 대해서
+
+"오류가 발생했어요" 라고 출력됨.

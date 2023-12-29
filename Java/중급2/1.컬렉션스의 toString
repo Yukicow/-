@@ -1,0 +1,49 @@
+
+
+
+
+컬렉션스 객체들을 toString 해 보면 그 객체의 요소들에 대한 toString의 값들이
+
+Stringbuilder에 의해 열거되어 출력된다.
+
+# Stringbuilder는 문자열을 받아서 하나의 문자열로 더해 주는 객체이다.
+
+
+컬렉션스의 추상 클래스에 정의된 toString을 뜯어 보면 내부적으로 먼저 Stringbuilder 객체를 만들고 
+
+iterator()를 이용해서 자신의 반복자를 만든다. 그리고 iterator를 통해 요소에 하나씩 접근하고
+
+Stringbuilder의 append() 메소드를 이용해서 그 요소의 toString 값을 Stringbuilder객체에 계속 더해가는 형식이다.
+
+즉, 컬렉션스 객체에 toString()을 하면 컬렉션스 객체 안에 있는 각 요소의 toString()값이(문자열)이 
+
+Stringbuilder에 의해 하나의 문자열로 더해져서 출력된다는 것이다.
+
+
+그렇다면 여기서 우리가 toString을 오버라이딩 하고 싶을 때 컬렉션스 객체의 toString이 아닌
+
+컬렉션스 객체 안에 담기는 데이터 타입에 해당하는 클래스의 toString을 오버라이딩 하는 것이 올바르다고 할 수 있다.
+
+
+예를 들어 
+
+HashSet<Student> hashset = new HashSet();
+
+을 통해 HashSet 컬렉션스 클래스의 hashset 객체를 생성하고 
+
+안에 Student 클래스의 객체들을 담는다고 한다면
+
+hashset.toString의 값은 Student 객체들의 Object 데이터 타입에 정의된 toString값이 열거되어 출력된다.
+
+하지만 만약 Student클래스의 정보에 대한 내용이 아닌 각 학생들의 이름과 학년 등에 대한 정보를 toString을 통해 나열하고 싶다면
+
+우리는 Student 클래스에 Object클래스에 정의된 toString을 오버라이딩 할 수 있다.
+
+그러면 위에서 말한 대로 우리가 hashset.toString을 하게되면 컬렉션스의 추상 클래스에 정의된 toString이 실행되면서
+
+iterator를 통해 각각의 요소에 접근하여 Stringbuilder을 이용해 요소들의 toString값을 내부적으로 배열 형식으로 저장하고
+
+그렇게 저장된 String 배열을 Stringbuilder의 toString()메소드를 통해 하나의 문자열로 출력한다.
+
+# Stringbuilder의 toString 메소드는 Stringbuilder 객체가 갖고 있는 문자열 배열을 전부 하나의 문자열로 반환하는 메소드이다.
+

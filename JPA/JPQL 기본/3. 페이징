@@ -1,0 +1,34 @@
+
+
+
+
+
+
+
+
+
+JPQL은 페이징 기능도 추상화 해서 제공한다.
+
+오라클로 페이징을 해 본 적이 있는 사람이라면 얼마나 거지같은 쿼리가 생기는 지 알 것이다.
+
+그런 것도 JPQL은 추상화해서 쉽게 제공하고 있다.
+
+
+바로 쿼리 객체의 setFirstResult()와 setMaxResult()를 이용하는 것이다.
+
+이 메소드들은 검색된 row들 중에서 시작 지점과 마지막 지점을 정해서 
+
+시작 지점부터 마지막 지점을 -1 값까지 row를 가져오도록 한다. 즉, 인덱스처럼 동작한다는 것이다.
+
+# 0~10이면 처음부터 10개까지 값을 가져옴
+
+
+예를 들어 이렇게 사용할 수 있다.
+
+em.createQuery("SELECT b FROM Member Board b ORDER BY b.date DECS")
+    .setFirstResult(0)
+    .setMaxResult(10)
+    .getResultList()
+
+이렇게 사용하면 persistence.xml파일의 dialect에 설정한 DB에 맞는 페이징 쿼리를 만들어서 처리한다.
+

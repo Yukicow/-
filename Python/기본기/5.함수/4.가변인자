@@ -1,0 +1,33 @@
+
+
+
+가변인자
+
+
+가변인자는 함수에서 매개변수가 인수를 여러개 받고 싶을 때 사용할 수 있다.
+
+매개변수 앞에 '*'을 붙여주면 된다.
+
+
+
+예시)
+
+def add(name, age, *language):
+    print("이름 : {0}  나이 : {1} 언어 : ".format(name,age), end = "")
+    for lang in language:
+        print(lang, end = " ")
+    print()
+
+
+ex = add(name,age,language1,language2,language3)
+
+이런 식으로 표현할 수 있다.
+
+하지만 가변인자는 매개변수 한 개에만 지정할 수 있다.
+
+def add(name, *age, *language):
+
+이런 식으로 안됨. 
+
+키워드값 써도 안됨 ㅋ.
+

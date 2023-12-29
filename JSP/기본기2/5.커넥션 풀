@@ -1,0 +1,228 @@
+
+
+
+
+커넥션 풀(DBCP)
+
+클라이언트에서 다수의 요청이 발생할 경우 데이터베이스에 부하가 발생하게 된다.
+
+이러한 문제를 해결하기 위해서 커넥션 풀 기법을 이용한다.
+
+
+클라이언트가 요청을 할 때마다 Connection 객체를 만든다면 부하가 심하기 때문에
+
+Connection pool에 일정한 객체를 미리 만들어 놓고 요청이 들어오면 그 객체를 사용하도록 하는 프로그래밍 기법.
+
+
+
+커넥션 풀(DBCP)의 장점
+
+
+1. DB 접속 설정 객체를 미리 만들어 연결하여 메모리 상에 등록해 놓기 때문에 
+
+불필요한 작업(커넥션 생성, 삭제)이 사라지므로 클라이언트가 빠르게 DB에 접속이 가능하다.
+
+
+2. DB Connection 수를 제한할 수 있어서 과도한 접속으로 인한 서버 자원 고갈 방지가 가능하다.
+
+
+3. DB 접속 모듈을 공통화하여 DB 서버의 환경이 바뀔 경우 쉬운 유지 보수가 가능하다.
+
+
+4. 연결이 끝난 Connection을 재사용함으로써 새로 객체를 만드는 비용을 줄일 수 있다.
+
+
+
+
+커넥션 풀(DBCP)의 유의 사항
+
+
+너무 많은 DB 접근이 발생할 경우에는 커넥션은 한정되어 있기 때문에 쓸 수 있는 커넥션이 발납될 때까지 기다려야 한다. 
+
+너무 많은 커넥션을 생성할 시에는 커넥션 또한 객체이므로 많은 메모리를 차지하게 되고, 프로그램의 성능을 떨어뜨리는 원인이 된다.
+
+즉, WAS에서 커넥션 풀을 크게 설정하면 메모리 소모가 큰 대신 많은 사용자가 대기 시간이 줄어 들고, 
+
+반대로 커넥션 풀을 작게 설정하면 그 만큼 대기 시간이 길어진다. 
+
+따라서 사용량에 따라 적정량의 커넥션 객체를 생성해 두어야 한다.
+ 
+
+
+Connection Pool이 커지면 성능은 무조건 좋아질까?
+
+그렇지 않다. Connection의 주체는 Thread이므로 Thread와 함께 고려해야 한다.
+
+ 
+1. Thread Pool 크기 < Connection Pool 크기
+
+Thread Pool에서 트랜잭션을 처리하는 Thread가 사용하는 Connection 외에 남는 Connection은 실질적으로 메모리 공간만 차지하게 된다.
+
+
+2. Thread Pool 크기와 Connection Pool 모두 크기 증가
+
+Thread 증가로 인해 더 많은 Context Switching이 발생한다.
+
+Disk 경합(서로 경쟁함) 측면에서 성능 한계가 발생한다.
+
+- 데이터베이스는 하드 디스크 하나 당 하나의 I/O를 처리하므로 블로킹이 발생한다.
+
+- 즉, 특정 시점부터는 성능적인 증가가 Disk 병목으로 인해 미비해진다.
+
+
+
+
+커넥션 풀 적용하기
+
+
+커넥션 풀은 컨테이너단에서 정의를 해 주어야 한다. 
+
+각 DB마다 적용 방법에 차이가 있다.
+
+톰캣 공식 사이트의 설명서를 보고 참조해서 사용하면 된다.
+
+# https://tomcat.apache.org/tomcat-8.5-doc/jndi-datasource-examples-howto.html
+
+
+일단 우리는 톰캣과 오라클을 사용 중이니 오라클에 대한 내용을 확인해 보니
+
+<Resource name="jdbc/myoracle" auth="Container"
+              type="javax.sql.DataSource" driverClassName="oracle.jdbc.OracleDriver"
+              url="jdbc:oracle:thin:@db주소:포트:방식"
+              username="scott" password="tiger" maxTotal="20" maxIdle="10"
+              maxWaitMillis="-1"/>
+
+위의 내용을 톰캣 서버의 context.xml 파일에 붙여 넣어 주면 된다.
+
+
+<Resource> 태그의 각 속성에 대한 설명은 다음과 같다.
+
+
+driverClassName : DB작업을 위해 로딩할 JDBC 드라이버 파일. Class.forName() 메소드의 인자값으로 사용된다.
+
+url : 접속할 DB 서버의 URL을 지정한다.
+
+username : DB 서버에 로그인할 계정을 지정한다.
+
+password : DB 서버에 로그인할 게정의 비밀번호를 지정한다.
+
+name : 이름은 임의로 지정할 수 있으며, 이 이름을 통해서 DBCP 에 접근, 커넥션 풀을 이용할 수 있게 된다.
+
+type : Connection Pool을 사용할 수 있도록 해주는 클래스 javax.sql.DataSource를 적어 준다.
+
+
+maxTotal : 동시에 사용할 수 있는 최대 커넥션 개수 (기본값: 8)
+
+# 만들어진 커넥션 중 사용자에게 제공될 수 있는 커넥션의 최대 개수. 톰캣 9버전 부터 maxActive에서 maxTotal로 바뀜. 
+
+
+maxIdle : 커넥션 풀에 최대로 유지될 수 있는 커넥션 개수(기본값: 8)
+
+# 만들어 두는 커넥션의 최대 개수라는 뜻
+
+
+maxWaitMillis : Connection의 사용 요청이 있을 때 대기 시간을 지정한다. 밀리초 단위로 입력한다.
+
+지정 시간이 지난 후에도 Connection을 얻지 못하면 Exception이 발생한다. 음수 입력시 무한 대기.
+
+# 톰캣 9부터 maxWait에서 maxWaitMillis 으로 이름이 바뀐 것.
+
+
+
+위의 속성들 외에도 추가적인 속성도 있다.
+
+minIdle	: 최소한으로 유지할 커넥션 개수(기본값: 0)
+
+whenExhaustedAction : 커넥션 풀에서 가져올 수 있는 커넥션이 없을 경우의 동작을 결정.
+
+등등 많이 있다.
+
+
+
+이렇게 xml파일에 저장을 해 주고 나면 소스코드에서 사용하는 방법인데
+
+Tomcat 공식사이트의 document에 따르면 context 추가 후 web.xml 에 resource-ref를 등록하라고 되어있지만 등록하지 않아도 룩업한다.
+
+따라서 바로 소스코드에서 사용하는 단계로 넘어간다. 밑의 내용을 이해하려면 JNDI 내용을 선행해야 한다.
+
+
+Context initContext = new InitialContext();
+Context envContext  = (Context) initContext.lookup("java:comp/env");
+DataSource ds = (DataSource) envContext.lookup("태그에서 name으로 지정한 값");
+Connection conn = ds.getConnection();
+//etc.
+
+
+위의 소스코드가 커넥션 풀을 사용하기 위한 코드이고 톰캣 공식 홈페이지에서 정의되어 있는 내용이다.
+
+
+JNDI(Java Naming and Directory Interface)는 디렉터리 서비스에서 제공하는 데이터 및 객체를 
+
+발견(discover)하고 참고(lookup) 하기 위한 자바 API다.
+
+
+그래서 DBCP를 이용하려면 JNDI를 왜 사용해야 하는가.
+
+WebSphere, Tomcat과 같은 WAS에서 설정을 통해 데이터 소스(커넥션풀)를 만들어 놓으면, 우리는 이걸 가져와서 사용해야만 한다.
+
+WAS 내부 어딘가의 특정 디렉토리에 데이터 소스가 분명 꽁꽁 숨겨져 있을 텐테, 
+
+여기에 접근하기 위해서 JNDI라는 특별한 기술을 사용하게 된다.
+
+
+우선 WAS와 연결을 해야만 하므로(정확히 말하면 WAS와 연결된 컨텍스트를 생성해야만 하므로) 
+
+InitialContext라는 객체를 생성하게 된다. 이 객체를 생성하면 WAS와 자동으로 연결된다. 
+
+# 멀리 떨어져 있는 WAS와 연결하는 경우에는 복잡하게 IP 주소도 적어주는 경우도 있다고 한다.
+
+
+이제 생성된 Context에서 JNDI 문법을 통해 WAS 내부의 디렉토리에 접근해서 숨어있는 데이터 소스를 가져오기만 하면 된다.
+
+lookup() 메소드를 이용하는데 우리가 전체 디렉토리 경로를 윈도우 탐색기에 입력해서 특정 파일을 실행하는 것과 똑같은 원리이다.
+
+'java:comp/env/' 는 필수적으로 붙는 이름이며 'jdbc/default'가 바로 실제 데이터 소스의 이름이다.
+
+# java:comp/env는 웹어플의 구성된 엔트리와 리소스들이 배치되어있는 부분.
+
+쉽게 말해서 java:comp/env/로 폴더이고 jdbc/default는 파일 이름인 느낌이다.
+
+그래서 위에 
+
+Context envContext  = (Context) initContext.lookup("java:/comp/env");
+DataSource ds = (DataSource) envContext.lookup("태그에서 name으로 지정한 값");
+
+이 부분을 하나로 통합해서 
+
+DataSource ds = (DataSource) envContext.lookup("java:/comp/env/태그에서 name으로 지정한 값");
+
+이런 식으로 사용할 수 있다.
+
+
+아까 위에서 우리가 생략한 부분을 가져와 보면
+
+<resource-ref>
+ <description>Oracle Datasource example</description>
+ <res-ref-name>jdbc/myoracle</res-ref-name>
+ <res-type>javax.sql.DataSource</res-type>
+ <res-auth>Container</res-auth>
+</resource-ref>
+
+이렇게 되어 있다. 리소스의 레퍼런스 네임이 jdbc/myoracle 이라고 되어 있다.
+
+즉, 위에서 resource태그로 넘긴 그 객체를 가리키는 레퍼런스가 jdbc/myoracle이라는 것이고 
+
+그 객체의 타입은 javax.sql.DataSource라는 것이다.
+
+
+DataSource ds = (DataSource) envContext.lookup("java:/comp/env/태그에서 name으로 지정한 값");
+
+우리가 위의 명령어를 사용하는 것은 java:/comp/env 에 우리가 지정한 이름으로 매핑된 레퍼런스에 접근해 ds에 넣는 것이다.
+
+그리고 lookup의 반환형이 Object이기 때문에 타입 캐스팅을 통해 원래 데이터 타입인 DataSource타입으로 바꿔 준다.
+
+우리는 이제 웹 서버에서 만들어 준 Connection 객체 풀을 이용할 수 있게 되었다.
+
+ds.getConnection()을 통해 Connection 객체와 연결할 수 있다. 
+
+나머지 사용법은 일반 Connection 객체와 같다.

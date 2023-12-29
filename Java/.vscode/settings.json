@@ -1,0 +1,6 @@
+{
+    "java.project.sourcePaths": [
+        "test폴더",
+        "test폴더\\project폴더"
+    ]
+}

@@ -1,0 +1,105 @@
+
+
+
+
+
+
+전 내용에서 DI를 통한 AOP를 구현해 보았는데
+
+그 때 Property 태그로 Interceptor를 설정해 주었었다.
+
+이 때 우리가 설정해 준 Interceptor는 주요 로직을 감싸는 보조로직을 작성하는 형태라서
+
+보조 로직이 Around 형태로 주요 로직의 실행 이전과 이후에 모두 포함될 수 있는 녀셕이다.
+
+하지만 Interceptor로 설정할 수 있는 Advice 들 중에는 이렇게 Around형태가 아니고
+
+반드시 주요 로직의 이전 또는 이후, 아니면 예외 발생 시에 수행되도록 하는 Advice가 있다.
+
+오늘은 그녀석들에 대해 알아 볼 것이다.
+
+
+오늘 설명할 Advice 외에도 종류가 여러 가지가 있지만 내가 배운 내용만 정리하겠다.
+
+먼저, 주요 로직의 실행 이전에 수행되는 Advice는 MethodBeforeAdvice가 있다.
+
+이 인터페이스를 구현한 클래스는 Before 메소드를 구현하도록 되어 있으며 이 Before 메소드가
+
+주요 로직 이전에 실행될 로직에 해당된다.
+
+Before메소드는 우리가 호출한 주요 로직의 함수에 대한 Method 객체와 인자 그리고 target에 대한 객체를 매개변수로 갖는다.
+
+우리는 그것들을 이용해서 특정 로직을 작성해도 되고 필요가 없으면 굳이 사용하지 않아도 된다.
+
+
+근데 위의 인자들을 사용화는 경우가 도대체 뭐가 있나요?
+
+사실 얼마나 쓰일 지는 모르겠지만 없는 것 보단 나은 것이 맞다. 
+
+우리가 언제 그것들을 사용하게 될 지 모르기 때문이다. 우리는 객체를 통해 직접 주요 로직을 호출하는 것이 아니기 때문에
+
+그에 대한 정보들이 있어서 나쁠 건 없다. 예를 들어 우리가 호출한 메소드의 이름을 사용하고 싶다면
+
+Method 객체의 getName() 등을 사용할 수 있다.
+
+
+다음은 AfterReturningAdvice이다. 
+
+이 인터페이스를 구현하는 클래스는 AfterReturning 메소드를 구현해야 한다.
+
+이 메소드는 주요 로직 이후에 발생하는 로직에 대해 작성하면 된다.
+
+MethodBeforeAdvice와 똑같은 매개변수를 포함하지만 한 가지 더 갖고 있다. 바로 주요 로직에서 return한 값이다.
+
+AfterReturning은 주요 로직이 수행되고 나온 return값 또한 매개변수로 갖는다.
+
+
+마지막으로 Target 클래스의 주요 로직 수행 중 예외가 발생했을 때 수행되도록 하는 ThrowsAdvice이다.
+
+ThrowsAdvice는 따로 강제되는 구현 메소드는 없다.
+
+그도 그럴게 각 발생하는 예외에 대한 로직을 작성하는 것이기 때문에 
+
+어떤 메소드를 딱 만들어 놓고 구현하라고 할 수가 없다. 
+
+예외에 따라서 인자가 계속 달라지기 때문이다.
+
+하지만 ThrowsAdvice인터페이스를 구현하는 클래스는 afterThrowing이라는 메소드를 구현하도록 하고 있다.
+
+하나의 약속이라고 생각하면 된다. 예외 발생 시 afterThrowing이라는 이름으로 구현한 메소드를 호출하는 듯 하다.
+
+afterThrowing 메소드에 인자로 원하는 예외 객체를 넣으면 그 예외가 발생했을 때에 대한 수행 로직을 만들 수 있다.
+
+
+
+위의 MethodBeforeAdvice,AfterReturningAdvice,ThrowsAdvice는 순서가 정해져 있다.
+
+Around -> MethodBeforeAdvice -> target의 주요 로직 -> AfterReturningAdvice or ThrowsAdvice -> Around의 순서이다.
+
+즉, Around에서 target의 주요 로직이 수행되는 시점의 앞뒤로 각 Advice의 순서가 나뉘는 것이다.
+
+주요 로직 수행 전에 MethodBeforeAdvice 로직이 수행되고 주요 로직 수행 후 AfterReturningAdvice 또는
+
+수행 도중 예외가 발생한다면 ThrowsAdvice, 그리고 마지막으로 Around의 로직이 수행되는 형태이다.
+
+
+이런 Advice 객체들은 interceptorNames의 value 태그를 통해 여러 가지 설정할 수가 있다.
+
+interceptorNames가 배열이기 때문에 여러개를 설정할 수가 있는 것이다.
+
+원하는 것만 넣을 수도 있지만 각각의 Advice를 생성하고 설정해서 사용하는 것도 가능하다.
+
+설정 순서와 상관없이 위의 Advice의 실행 순서대로 로직이 수행된다.
+
+
+Around Advice 객체의 경우 주요 로직의 호출을 강제하지만 다른 Advice객체들은 그렇지 않다.
+
+애초에 주요 로직 기준으로 언제 수행되는 지가 정해져 있기 때문에 그냥 보조 로직을 작성하면 
+
+알아서 주요 로직이 수행되고 그 전후로 보조 로직이 수행된다. 
+
+하지만 Around Advice의 경우네는 invocation.proceed를 통해 주요 로직의 호출이 강제된다.
+
+Around Advice와 함께 다른 Advice객체들이 쓰일 경우 invocation.proceed가 없으면 예외가 발생한다.
+
+아무래도 Around Advice와 함께 쓰이면 주요 로직의 실행 기준이 invocation.proceed가 되는 듯 하다.

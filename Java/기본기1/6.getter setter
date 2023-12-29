@@ -1,0 +1,46 @@
+
+
+
+
+
+
+getter와 setter는 클래스에서 특정 데이터를 불러오거나 업데이트하는 메소드들을 말한다.
+
+
+예를 들어 
+
+class Student{
+
+    private name;
+    private age;
+    private major;
+}
+
+와 같이 3개의 필드가 있다고 해 보자.
+
+각 필드를 새로 초기화 하는 메소드를 setter(세팅해 주는 녀석)
+
+각 필드의 데이터를 불러오는 메소드를 getter(불러와 주는 녀석)이라고 한다.
+
+
+class Student{
+
+    private String name;
+    private int age;
+    private String major;
+
+    public String getName(){
+        return this.name;
+    }
+
+    public String getName(String name){
+        return this.name = name;
+    }
+}
+
+
+위에서 getName 메소드가 name필드에 대한 getter에 해당하고 setName이 setter에 해당한다.
+
+이러한 getter와 setter는 이클립스에서 자동으로 만들 수도 있는데
+
+소스 코드에서 오른쪽 마우스 버튼을 누르고 source(소스) Generate Getters and Setters를 누르면 된다.

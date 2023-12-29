@@ -1,0 +1,37 @@
+
+
+
+
+
+
+
+Post형태로 받은 데이터도 Get방식이랑 다루는 건 똑같다.
+
+그래서 이번 시간에는 그냥 간단하게 여러 입력 형식에 따른 몇 가지 사용방법에 대해 알아 보겠다.
+
+
+우리가 html에서 check box를 사용하게 되면 여러 개의 데이터를 입력받을 수 있게 되는데 
+
+이 때 Controller에서 어떻게 이것을 받아서 사용할까.
+
+별 거 없다. 그냥 배열형태로 받아서 꺼내서 사용하면 된다.
+
+
+예를 들어
+
+<input name="foods" type="checkbox" value="1" id="food1"><label for="food1">짜장</label>
+<input name="foods" type="checkbox" value="2" id="food2"><label for="food2">탕수육</label>
+<input name="foods" type="checkbox" value="3" id="food3"><label for="food3">피자</label>
+<input name="foods" type="checkbox" value="4" id="food4"><label for="food4">치킨</label>
+
+이렇게 할 경우 클라이언트는 여러 가지 선택이 가능한데 사용자가 선택한 데이터들이 하나하나 보내질 것이다.
+
+하지만 데이터를 받을 때에는 foods라는 이름으로 접근이 가능하기 때문에 Controller에서는 배열로 받으면 된다는 것이다.
+
+
+@RequestMapping("/test")
+public String test(@RequestParam(name="foods") String[] foods) {
+    return "test";
+}
+
+그러면 배열에 데이터들이 각각 담긴 채로 받을 수 있다.

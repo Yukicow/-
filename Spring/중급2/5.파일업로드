@@ -1,0 +1,66 @@
+
+
+
+
+
+
+파일 업로드에 대한 부분은 Servlet에서 다룬 적이 있지만
+
+Spring에서 제공하는 라이브러리를 이용하여 Config설정을 다른 방식으로 
+
+또 저번에는 Stream을 이용한 복잡한 방식의 파일 업로드를 했지만 이제는 File클래스를 통해 바로 업로드되도록 할 것이다.
+
+겹치는 내용이 많아서 어렵진 않겠지만 자주 반복해서 숙달하도록 하자.
+
+
+먼저 multipart/form-data 의 인코딩 타입으로 요청을 받을 때에
+
+또 거기서 받은 파일을 처리하기 위해서 우리는 설정을 해 주어야 했는데
+
+servlet을 공부할 때에는 어노테이션을 통해 처리했지만 이번에는 Spring에서 제공해 주는 라이브러리를 통해 xml에 설정할 것이다.
+
+
+Spring에서는 파일업로드를 위해 지원하는 라이브러리가 있는데 바로 CommonsMultipartResolver이다.
+
+파일 업로드를 위한 설정에 대한 부분을 처리해 주는 녀석이다.
+
+우리는 IoC컨테이너에 CommonsMultipartResolver를 추가해야 한다.
+
+bean으로 등록하고 property로 maxUploadSize만 설정하면 된다. # value는 원하는 파일 크기
+
+아니면 추가적으로 maxUploadSizePerFile이나 defaultEncoding 설정도 해 주어도 된다.
+
+
+이렇게 등록을 마치고 나면 이제 multipart/form-data 형태의 요청을 받을 준비가 되었다.
+
+그럼 이 요청에서 인자들을 받아서 실제로 업로드를 해야 하는데 
+
+Controller에서 multipart/form-data형태로 온 file 데이터를 어떤 데이터 타입으로 받아야 할까?
+
+MultipartFile 형태로 받으면 된다.
+
+
+@RequestMapping("test")
+public String test(MultipartFile file){
+
+}
+
+
+이제는 예전과 같이 파일이 업로드될 위치를 가져올 것인데.
+
+realPath 등에 대한 정보를 갖고 오기 위해 ServletContext가 필요하다.
+
+이 때 좋은 것은 spring을 사용하면 ServletContext가 IoC컨테이너에 기본으로 만들어진다는 것이다.
+
+어차피 자주 사용될 녀석이고 하니 우리는 Controller의 멤버로 ServletContext 변수를 만들고 @Autowired로 묶을 것이다.
+
+
+이제 ServletContext를 이용해서 파일이 업로드될 디렉토리의 RealPath를 얻고 
+
+그 realPath를 인자로 받는 File객체를 생성해서 exist() 메소드를 통해 그 path의 유효성 검사 후 없을 경우 mkdirs()로 생성
+
+좀 전의 realPath와 File.separator와 file.getOriginalFilename()값을 결합한다. 
+
+그 결합한 값을 인자로 받는 File객체 생성 후 MultipartFile 객체의 transferTo()메소드의 인자로 그 File 객체를 넘기면 
+
+우리가 지정한 Path에 파일이 업로드된다. Stream을 사용하지 않고 편하게 바로 파일 업로드가 가능하다.

@@ -1,0 +1,17 @@
+*
+
+*이 함수의 받는 변수 앞에 쓰일 경우 원하는 만큼 받겠다는 의미
+ex) 
+def profile(name, age, *friends):
+    print("이름 : {0}\t" "나이 : {1}\t" "친구들 : ".format(name, age), end="")
+    for friend in friends:
+        print(friend, end="")
+    print()
+
+profile("이한", 25, "아람", "소연", "리나")
+-> 이름 : 이한     나이 : 25      친구들 :아람 소연 리나
+
+이렇게 *을 붙여주면 friend에 대해서는 원하는 수 만큼 값을 받음.
+
+*설명)for문을 이용해 출력하는 이유
+friends가 튜플이라서 그냥 쓰면 출력될 때 ('아람', '소연', '리나') 이렇게 출력됨

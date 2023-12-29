@@ -1,0 +1,23 @@
+
+
+원하는 경우에 대해서 에러를 발생시킬 수도 있다
+
+rasie ~~ 형식으로 가능
+
+예시)
+
+try:
+    print("한 자리 수 나눗셈 계산기")
+    num1 = int(input("숫자 입력"))
+    num2 = int(input("숫자 입력"))
+    if (num1 >=10) or (num2 >= 10):
+        raise ValueError
+    print("{0} % {1} = {2} 입니다".format(num1, num2, int(num1/num2)))
+    
+except ValueError:
+    print("한 자리 숫자만 입력하세요.")
+
+raise ValueError를 사용하여 벨류 에러를 강제로 발생시키고
+
+except ValueError를 통해 발생한 벨류 에러에 대해 ~~한 문장을 출력하게 만듦.
+
